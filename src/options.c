@@ -34,6 +34,7 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
     {"print-header", 0, 0, 10001},
     {"print-segments", 0, 0, 10002},
     {"print-sections", 0, 0, 10003},
+    {"model", 0, 0, 10004},
     {NULL, 0, NULL, 0}
   };
 
@@ -54,6 +55,9 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
         break;
       case 10003:
         opts->printSections = 1;
+        break;
+      case 10004:
+        opts->model = 1;
         break;
       case '?':
       default:

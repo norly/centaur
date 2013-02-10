@@ -6,6 +6,7 @@
 
 #include <libelfu/analysis.h>
 #include <libelfu/lookup.h>
+#include <libelfu/model.h>
 
 
 #endif

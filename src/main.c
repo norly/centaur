@@ -5,6 +5,8 @@
 #include <libelf.h>
 #include <gelf.h>
 
+#include <libelfu/libelfu.h>
+
 #include "elfhandle.h"
 #include "options.h"
 #include "printing.h"
@@ -54,6 +56,18 @@ int main(int argc, char **argv)
 
   if (opts.printSections) {
     printSections(hIn.e);
+  }
+
+
+  /* Generate a memory model of the file */
+  if (opts.model) {
+    ElfuElf *me;
+
+    me = elfu_modelFromElf(hIn.e);
+
+    if (me) {
+      printf("Model successfully loaded.\n");
+    }
   }
 
 
