@@ -47,4 +47,6 @@ ElfuPhdr* elfu_modelFromPhdr(GElf_Phdr *phdr);
 ElfuScn* elfu_modelFromSection(Elf_Scn *scn);
 ElfuElf* elfu_modelFromElf(Elf *e);
 
+void elfu_modelToElf(ElfuElf *me, Elf *e);
+
 #endif

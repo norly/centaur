@@ -59,14 +59,26 @@ int main(int argc, char **argv)
   }
 
 
-  /* Generate a memory model of the file */
-  if (opts.model) {
-    ElfuElf *me;
+  /* Copy the input ELF to the output file */
+  if (!opts.fnOutput) {
+    if (opts.copy) {
+      fprintf(stderr, "Error: Missing output file name for requested operation.\n");
+    }
+  } else {
+    if (opts.copy) {
+      ElfuElf *me;
 
-    me = elfu_modelFromElf(hIn.e);
+      me = elfu_modelFromElf(hIn.e);
 
-    if (me) {
-      printf("Model successfully loaded.\n");
+      if (me) {
+        printf("Model successfully loaded.\n");
+
+        elfu_modelToElf(me, hOut.e);
+
+        printf("Model converted to ELF, ready to be written.\n");
+      } else {
+        printf("Failed to load model.\n");
+      }
     }
   }
 
