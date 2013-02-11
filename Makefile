@@ -21,6 +21,10 @@ LDFLAGS  := -lelf
 default: $(EXE)
 
 
+.PHONY: debug
+debug: $(EXE)
+	gdb $(EXE) $(shell ps -e | sed "s/^ *\([0-9]\+\) .*$(PROJ).*$$/\1/g;te;d;:e")
+
 
 $(EXE): $(OBJS)
 	@if [ ! -d $(BUILDDIR) ] ; then echo "Error: Build dir '$(BUILDDIR)' does not exist." ; false ; fi
