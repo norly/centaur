@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include <libelf.h>
 #include <gelf.h>
 

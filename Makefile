@@ -28,7 +28,7 @@ debug: $(EXE)
 
 $(EXE): $(OBJS)
 	@if [ ! -d $(BUILDDIR) ] ; then echo "Error: Build dir '$(BUILDDIR)' does not exist." ; false ; fi
-	gcc $(LDFLAGS) -o $@ $^
+	gcc -o $@ $^ $(LDFLAGS)
 
 
 $(BUILDDIR)/$(SRCDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
