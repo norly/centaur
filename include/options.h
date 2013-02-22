@@ -8,7 +8,6 @@ typedef struct {
   int printHeader;
   int printSegments;
   int printSections;
-  int copy;
 } CLIOpts;
 
 

@@ -59,26 +59,20 @@ int main(int argc, char **argv)
   }
 
 
-  /* Copy the input ELF to the output file */
-  if (!opts.fnOutput) {
-    if (opts.copy) {
-      fprintf(stderr, "Error: Missing output file name for requested operation.\n");
-    }
-  } else {
-    if (opts.copy) {
-      ElfuElf *me;
+  /* Copy the input ELF to the output file if the latter is specified */
+  if (opts.fnOutput) {
+    ElfuElf *me;
 
-      me = elfu_modelFromElf(hIn.e);
+    me = elfu_modelFromElf(hIn.e);
 
-      if (me) {
-        printf("Model successfully loaded.\n");
+    if (me) {
+      printf("Model successfully loaded.\n");
 
-        elfu_modelToElf(me, hOut.e);
+      elfu_modelToElf(me, hOut.e);
 
-        printf("Model converted to ELF, ready to be written.\n");
-      } else {
-        printf("Failed to load model.\n");
-      }
+      printf("Model converted to ELF, ready to be written.\n");
+    } else {
+      printf("Failed to load model.\n");
     }
   }
 

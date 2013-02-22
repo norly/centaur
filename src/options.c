@@ -18,7 +18,6 @@ static void printUsage(char *progname)
           "      --print-segments       Print program headers\n"
           "      --print-sections       Print sections\n"
           "\n"
-          "      --copy                 Copy input to output\n"
           "\n");
 }
 
@@ -36,7 +35,6 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
     {"print-header", 0, 0, 10001},
     {"print-segments", 0, 0, 10002},
     {"print-sections", 0, 0, 10003},
-    {"copy", 0, 0, 10004},
     {NULL, 0, NULL, 0}
   };
 
@@ -57,9 +55,6 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
         break;
       case 10003:
         opts->printSections = 1;
-        break;
-      case 10004:
-        opts->copy = 1;
         break;
       case '?':
       default:
