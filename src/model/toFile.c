@@ -15,9 +15,7 @@ static void elfu_modelToPhdrs(ElfuElf *me, Elf *e)
 
   /* Count PHDRs */
   i = 0;
-  for (mp = me->phdrList.cqh_first;
-        mp != (void *)&me->phdrList;
-        mp = mp->elem.cqe_next) {
+  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
     i++;
   }
 
@@ -27,9 +25,7 @@ static void elfu_modelToPhdrs(ElfuElf *me, Elf *e)
 
   /* Copy PHDRs */
   i = 0;
-  for (mp = me->phdrList.cqh_first;
-        mp != (void *)&me->phdrList;
-        mp = mp->elem.cqe_next) {
+  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
     if (!gelf_update_phdr (e, i, &mp->phdr)) {
       fprintf(stderr, "gelf_update_phdr() failed: %s\n", elf_errmsg(-1));
     }
@@ -59,9 +55,7 @@ static void elfu_modelToSection(ElfuScn *ms, Elf *e)
 
   /* Data */
   ElfuData *md;
-  for (md = ms->dataList.cqh_first;
-        md != (void *)&ms->dataList;
-        md = md->elem.cqe_next) {
+  CIRCLEQ_FOREACH(md, &ms->dataList, elem) {
     Elf_Data *dataOut = elf_newdata(scnOut);
     if (!dataOut) {
       fprintf(stderr, "elf_newdata() failed: %s\n", elf_errmsg(-1));
@@ -100,9 +94,7 @@ void elfu_modelToElf(ElfuElf *me, Elf *e)
 
 
   /* Sections */
-  for (ms = me->scnList.cqh_first;
-        ms != (void *)&me->scnList;
-        ms = ms->elem.cqe_next) {
+  CIRCLEQ_FOREACH(ms, &me->scnList, elem) {
     elfu_modelToSection(ms, e);
   }
 

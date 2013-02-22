@@ -8,9 +8,7 @@ size_t elfu_countSections(ElfuElf *me)
   ElfuScn *ms;
   size_t i = 0;
 
-  for (ms = me->scnList.cqh_first;
-        ms != (void *)&me->scnList;
-        ms = ms->elem.cqe_next) {
+  CIRCLEQ_FOREACH(ms, &me->scnList, elem) {
     i++;
   }
 
@@ -23,9 +21,7 @@ size_t elfu_countPHDRs(ElfuElf *me)
   ElfuPhdr *mp;
   size_t i = 0;
 
-  for (mp = me->phdrList.cqh_first;
-        mp != (void *)&me->phdrList;
-        mp = mp->elem.cqe_next) {
+  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
     i++;
   }
 
