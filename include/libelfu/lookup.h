@@ -7,8 +7,12 @@
 #include <libelfu/types.h>
 
 char* elfu_sectionName(Elf *e, Elf_Scn *scn);
+
 Elf_Scn* elfu_sectionByName(Elf *e, char *name);
+
 Elf_Scn* elfu_firstSectionInSegment(Elf *e, GElf_Phdr *phdr);
 Elf_Scn* elfu_lastSectionInSegment(Elf *e, GElf_Phdr *phdr);
+
+size_t elfu_scnSizeFile(const GElf_Shdr *shdr);
 
 #endif

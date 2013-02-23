@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 #include <libelf.h>
 #include <gelf.h>
@@ -72,6 +73,13 @@ ElfuScn* elfu_modelFromSection(Elf_Scn *scn)
 ElfuElf* elfu_modelFromElf(Elf *e)
 {
   ElfuElf *me;
+  Elf_Scn *scn;
+  size_t shstrndx;
+  size_t i, n;
+
+  if (elf_getshdrstrndx(e, &shstrndx) != 0) {
+    shstrndx = 0;
+  }
 
   me = malloc(sizeof(ElfuElf));
   if (!me) {
@@ -80,6 +88,7 @@ ElfuElf* elfu_modelFromElf(Elf *e)
 
   CIRCLEQ_INIT(&me->scnList);
   CIRCLEQ_INIT(&me->phdrList);
+  me->shstrtab = NULL;
 
   /*
    * General stuff
@@ -98,19 +107,22 @@ ElfuElf* elfu_modelFromElf(Elf *e)
   /*
    * Sections
    */
-  Elf_Scn *scn;
-
   scn = elf_getscn(e, 1);
+  i = 1;
   while (scn) {
     ElfuScn *ms = elfu_modelFromSection(scn);
 
     if (ms) {
       CIRCLEQ_INSERT_TAIL(&me->scnList, ms, elem);
+      if (i == shstrndx) {
+        me->shstrtab = ms;
+      }
     } else {
       goto out;
     }
 
     scn = elf_nextscn(e, scn);
+    i++;
   }
 
 
@@ -118,8 +130,6 @@ ElfuElf* elfu_modelFromElf(Elf *e)
   /*
    * Segments
    */
-  size_t i, n;
-
   if (elf_getphdrnum(e, &n)) {
     fprintf(stderr, "elf_getphdrnum() failed: %s\n", elf_errmsg(-1));
   }

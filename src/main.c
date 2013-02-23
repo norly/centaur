@@ -68,6 +68,9 @@ int main(int argc, char **argv)
     if (me) {
       printf("Model successfully loaded.\n");
 
+      elfu_modelCheck(me);
+      printf("Model checked.\n");
+
       elfu_modelToElf(me, hOut.e);
 
       printf("Model converted to ELF, ready to be written.\n");

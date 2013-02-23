@@ -37,14 +37,17 @@ typedef struct {
   CIRCLEQ_HEAD(ScnList, ElfuScn) scnList;
   CIRCLEQ_HEAD(PhdrList, ElfuPhdr) phdrList;
 
-  ElfuPhdr *entryBase;
-  GElf_Addr *entryOffs;
+  ElfuScn *shstrtab;
 } ElfuElf;
 
 
 
 size_t elfu_countSections(ElfuElf *me);
 size_t elfu_countPHDRs(ElfuElf *me);
+
+char* elfu_modelScnName(ElfuElf *me, ElfuScn *ms);
+
+int elfu_modelCheck(ElfuElf *me);
 
 ElfuPhdr* elfu_modelFromPhdr(GElf_Phdr *phdr);
 ElfuScn* elfu_modelFromSection(Elf_Scn *scn);
