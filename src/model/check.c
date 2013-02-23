@@ -43,7 +43,7 @@ static int cmpScnOffs(const void *ms1, const void *ms2)
 }
 
 
-int elfu_modelCheck(ElfuElf *me)
+int elfu_mCheck(ElfuElf *me)
 {
   ElfuScn *ms;
   size_t numSecs;
@@ -51,7 +51,7 @@ int elfu_modelCheck(ElfuElf *me)
   size_t i;
 
   /* Sort sections by offset in file */
-  numSecs = elfu_countSections(me);
+  numSecs = elfu_mCountScns(me);
   sortedSecs = malloc(numSecs * sizeof(*sortedSecs));
   if (!sortedSecs) {
     fprintf(stderr, "elfu_check: Failed to allocate memory.\n");
@@ -72,8 +72,8 @@ int elfu_modelCheck(ElfuElf *me)
     if (sortedSecs[i]->shdr.sh_offset + elfu_gScnSizeFile(&sortedSecs[i]->shdr)
         > sortedSecs[i+1]->shdr.sh_offset) {
       fprintf(stderr, "elfu_check: Found overlapping sections: %s and %s.\n",
-                      elfu_modelScnName(me, sortedSecs[i]),
-                      elfu_modelScnName(me, sortedSecs[i+1]));
+                      elfu_mScnName(me, sortedSecs[i]),
+                      elfu_mScnName(me, sortedSecs[i+1]));
     }
   }
 
@@ -82,7 +82,7 @@ int elfu_modelCheck(ElfuElf *me)
   for (i = 0; i < numSecs; i++) {
     if (sortedSecs[i]->shdr.sh_offset < me->ehdr.e_ehsize) {
       fprintf(stderr, "elfu_check: Found section overlapping with EHDR: %s.\n",
-                      elfu_modelScnName(me, sortedSecs[i]));
+                      elfu_mScnName(me, sortedSecs[i]));
     }
   }
 
@@ -94,7 +94,7 @@ int elfu_modelCheck(ElfuElf *me)
                       me->ehdr.e_phoff,
                       me->ehdr.e_phentsize * me->ehdr.e_phnum)) {
       fprintf(stderr, "elfu_check: Found section overlapping with PHDRs: %s.\n",
-                      elfu_modelScnName(me, sortedSecs[i]));
+                      elfu_mScnName(me, sortedSecs[i]));
     }
   }
 

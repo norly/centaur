@@ -1,11 +1,10 @@
-#ifndef __LIBELFU_MODEL_H__
-#define __LIBELFU_MODEL_H__
+#ifndef __LIBELFU_MODELTYPES_H__
+#define __LIBELFU_MODELTYPES_H__
 
 #include <sys/queue.h>
 
 #include <elf.h>
 #include <gelf.h>
-
 
 typedef struct ElfuData {
   Elf_Data data;
@@ -40,19 +39,5 @@ typedef struct {
   ElfuScn *shstrtab;
 } ElfuElf;
 
-
-
-size_t elfu_countSections(ElfuElf *me);
-size_t elfu_countPHDRs(ElfuElf *me);
-
-char* elfu_modelScnName(ElfuElf *me, ElfuScn *ms);
-
-int elfu_modelCheck(ElfuElf *me);
-
-ElfuPhdr* elfu_modelFromPhdr(GElf_Phdr *phdr);
-ElfuScn* elfu_modelFromSection(Elf_Scn *scn);
-ElfuElf* elfu_modelFromElf(Elf *e);
-
-void elfu_modelToElf(ElfuElf *me, Elf *e);
 
 #endif

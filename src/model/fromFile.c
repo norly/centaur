@@ -1,14 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-
 #include <libelf.h>
 #include <gelf.h>
-
 #include <libelfu/libelfu.h>
 
 
-ElfuPhdr* elfu_modelFromPhdr(GElf_Phdr *phdr)
+static ElfuPhdr* modelFromPhdr(GElf_Phdr *phdr)
 {
   ElfuPhdr *mp;
 
@@ -23,7 +21,7 @@ ElfuPhdr* elfu_modelFromPhdr(GElf_Phdr *phdr)
 }
 
 
-ElfuScn* elfu_modelFromSection(Elf_Scn *scn)
+static ElfuScn* modelFromSection(Elf_Scn *scn)
 {
   ElfuScn *ms;
   Elf_Data *data;
@@ -70,7 +68,7 @@ ElfuScn* elfu_modelFromSection(Elf_Scn *scn)
 
 
 
-ElfuElf* elfu_modelFromElf(Elf *e)
+ElfuElf* elfu_mFromElf(Elf *e)
 {
   ElfuElf *me;
   Elf_Scn *scn;
@@ -110,7 +108,7 @@ ElfuElf* elfu_modelFromElf(Elf *e)
   scn = elf_getscn(e, 1);
   i = 1;
   while (scn) {
-    ElfuScn *ms = elfu_modelFromSection(scn);
+    ElfuScn *ms = modelFromSection(scn);
 
     if (ms) {
       CIRCLEQ_INSERT_TAIL(&me->scnList, ms, elem);
@@ -143,7 +141,7 @@ ElfuElf* elfu_modelFromElf(Elf *e)
       break;
     }
 
-    mp = elfu_modelFromPhdr(&phdr);
+    mp = modelFromPhdr(&phdr);
 
     if (mp) {
       CIRCLEQ_INSERT_TAIL(&me->phdrList, mp, elem);

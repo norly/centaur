@@ -1,14 +1,12 @@
 #include <assert.h>
 #include <stdlib.h>
-
 #include <libelf.h>
 #include <gelf.h>
-
 #include <libelfu/libelfu.h>
 
 
 
-char* elfu_modelScnName(ElfuElf *me, ElfuScn *ms)
+char* elfu_mScnName(ElfuElf *me, ElfuScn *ms)
 {
   assert(me);
   assert(ms);

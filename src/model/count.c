@@ -5,7 +5,7 @@
 
 
 /* NULL section is not counted! */
-size_t elfu_countSections(ElfuElf *me)
+size_t elfu_mCountScns(ElfuElf *me)
 {
   ElfuScn *ms;
   size_t i = 0;
@@ -20,7 +20,7 @@ size_t elfu_countSections(ElfuElf *me)
 }
 
 
-size_t elfu_countPHDRs(ElfuElf *me)
+size_t elfu_mCountPhdrs(ElfuElf *me)
 {
   ElfuPhdr *mp;
   size_t i = 0;

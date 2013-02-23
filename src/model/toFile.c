@@ -1,14 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <libelf.h>
 #include <gelf.h>
-
 #include <libelfu/libelfu.h>
 
 
 
-static void elfu_modelToPhdrs(ElfuElf *me, Elf *e)
+static void modelToPhdrs(ElfuElf *me, Elf *e)
 {
   ElfuPhdr *mp;
   size_t i;
@@ -36,7 +34,7 @@ static void elfu_modelToPhdrs(ElfuElf *me, Elf *e)
 
 
 
-static void elfu_modelToSection(ElfuScn *ms, Elf *e)
+static void modelToSection(ElfuScn *ms, Elf *e)
 {
   Elf_Scn *scnOut;
 
@@ -74,7 +72,7 @@ static void elfu_modelToSection(ElfuScn *ms, Elf *e)
 
 
 
-void elfu_modelToElf(ElfuElf *me, Elf *e)
+void elfu_mToElf(ElfuElf *me, Elf *e)
 {
   ElfuScn *ms;
 
@@ -95,12 +93,12 @@ void elfu_modelToElf(ElfuElf *me, Elf *e)
 
   /* Sections */
   CIRCLEQ_FOREACH(ms, &me->scnList, elem) {
-    elfu_modelToSection(ms, e);
+    modelToSection(ms, e);
   }
 
 
   /* PHDRs */
-  elfu_modelToPhdrs(me, e);
+  modelToPhdrs(me, e);
 
 
   elf_flagelf(e, ELF_C_SET, ELF_F_DIRTY);
