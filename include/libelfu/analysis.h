@@ -6,6 +6,6 @@
 
 #include <libelfu/types.h>
 
-ELFU_BOOL elfu_segmentContainsSection(GElf_Phdr *phdr, Elf_Scn *scn);
+int elfu_segmentContainsSection(GElf_Phdr *phdr, GElf_Shdr *shdr);
 
 #endif

@@ -25,7 +25,7 @@ Elf_Scn* elfu_firstSectionInSegment(Elf *e, GElf_Phdr *phdr)
     }
 
     if (shdr.sh_offset == phdr->p_offset
-        && elfu_segmentContainsSection(phdr, scn) == ELFU_TRUE) {
+        && elfu_segmentContainsSection(phdr, &shdr)) {
       return scn;
     }
 

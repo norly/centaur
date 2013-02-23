@@ -26,10 +26,14 @@ void printSectionsInSegment(Elf *e, GElf_Phdr *phdr)
   scn = elf_getscn(e, 0);
 
   while (scn) {
-    ELFU_BOOL isInSeg;
+    GElf_Shdr shdr;
 
-    isInSeg = elfu_segmentContainsSection(phdr, scn);
-    if (isInSeg == ELFU_TRUE) {
+    if (gelf_getshdr(scn, &shdr) != &shdr) {
+      fprintf(stderr, "gelf_getshdr() failed: %s\n", elf_errmsg(-1));
+      continue;
+    }
+
+    if (elfu_segmentContainsSection(phdr, &shdr)) {
       printf("       %10u %s\n", elf_ndxscn(scn), elfu_sectionName(e, scn));
     }
 

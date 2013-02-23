@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <libelf.h>
@@ -21,22 +22,24 @@ Elf_Scn* elfu_lastSectionInSegment(Elf *e, GElf_Phdr *phdr)
 
   scn = elf_getscn(e, 1);
   while (scn) {
-    if (elfu_segmentContainsSection(phdr, scn) == ELFU_TRUE) {
+    GElf_Shdr shdr;
+
+    if (gelf_getshdr(scn, &shdr) != &shdr) {
+      fprintf(stderr, "gelf_getshdr() failed: %s\n", elf_errmsg(-1));
+      continue;
+    }
+
+    if (elfu_segmentContainsSection(phdr, &shdr)) {
       if (!last) {
         last = scn;
       } else {
         GElf_Shdr shdrOld;
-        GElf_Shdr shdrNew;
 
         if (gelf_getshdr(last, &shdrOld) != &shdrOld) {
           continue;
         }
 
-        if (gelf_getshdr(scn, &shdrNew) != &shdrNew) {
-          continue;
-        }
-
-        if (shdrNew.sh_offset + shdrNew.sh_size
+        if (shdr.sh_offset + shdr.sh_size
             > shdrOld.sh_offset + shdrOld.sh_size) {
           // TODO: Check (leftover space in memory image) < (p_align)
           last = scn;

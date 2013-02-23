@@ -10,9 +10,15 @@
 void printSegmentsWithSection(Elf *e, Elf_Scn *scn)
 {
   GElf_Phdr phdr;
+  GElf_Shdr shdr;
   int i;
   size_t n;
 
+
+  if (gelf_getshdr(scn, &shdr) != &shdr) {
+    fprintf(stderr, "gelf_getshdr() failed: %s\n", elf_errmsg(-1));
+    return;
+  }
 
   if (elf_getphdrnum(e, &n)) {
     fprintf(stderr, "elf_getphdrnum() failed: %s\n", elf_errmsg(-1));
@@ -20,15 +26,12 @@ void printSegmentsWithSection(Elf *e, Elf_Scn *scn)
   }
 
   for (i = 0; i < n; i++) {
-    ELFU_BOOL isInSeg;
-
     if (gelf_getphdr(e, i, &phdr) != &phdr) {
       fprintf(stderr, "getphdr() failed for #%d: %s\n", i, elf_errmsg(-1));
       continue;
     }
 
-    isInSeg = elfu_segmentContainsSection(&phdr, scn);
-    if (isInSeg == ELFU_TRUE) {
+    if (elfu_segmentContainsSection(&phdr, &shdr)) {
       printf("     %d %s\n", i, segmentTypeStr(phdr.p_type));
     }
   }
