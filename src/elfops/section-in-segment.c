@@ -13,7 +13,7 @@
  *
  * If no section fits, NULL is returned.
  */
-Elf_Scn* elfu_firstSectionInSegment(Elf *e, GElf_Phdr *phdr)
+Elf_Scn* elfu_eScnFirstInSegment(Elf *e, GElf_Phdr *phdr)
 {
   Elf_Scn *scn;
 
@@ -26,7 +26,7 @@ Elf_Scn* elfu_firstSectionInSegment(Elf *e, GElf_Phdr *phdr)
     }
 
     if (shdr.sh_offset == phdr->p_offset
-        && elfu_segmentContainsSection(phdr, &shdr)) {
+        && elfu_ePhdrContainsScn(phdr, &shdr)) {
       return scn;
     }
 
@@ -45,7 +45,7 @@ Elf_Scn* elfu_firstSectionInSegment(Elf *e, GElf_Phdr *phdr)
  *
  * If no section fits, NULL is returned.
  */
-Elf_Scn* elfu_lastSectionInSegment(Elf *e, GElf_Phdr *phdr)
+Elf_Scn* elfu_eScnLastInSegment(Elf *e, GElf_Phdr *phdr)
 {
   Elf_Scn *last = NULL;
   Elf_Scn *scn;
@@ -60,7 +60,7 @@ Elf_Scn* elfu_lastSectionInSegment(Elf *e, GElf_Phdr *phdr)
       continue;
     }
 
-    if (elfu_segmentContainsSection(phdr, &shdr)) {
+    if (elfu_ePhdrContainsScn(phdr, &shdr)) {
       if (!last) {
         last = scn;
       } else {

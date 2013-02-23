@@ -33,8 +33,8 @@ void printSectionsInSegment(Elf *e, GElf_Phdr *phdr)
       continue;
     }
 
-    if (elfu_segmentContainsSection(phdr, &shdr)) {
-      printf("       %10u %s\n", elf_ndxscn(scn), elfu_sectionName(e, scn));
+    if (elfu_ePhdrContainsScn(phdr, &shdr)) {
+      printf("       %10u %s\n", elf_ndxscn(scn), elfu_eScnName(e, scn));
     }
 
     scn = elf_nextscn(e, scn);

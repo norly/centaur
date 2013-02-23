@@ -6,7 +6,7 @@
 #include <libelfu/libelfu.h>
 
 
-Elf_Scn* elfu_sectionByName(Elf *e, char *name)
+Elf_Scn* elfu_eScnByName(Elf *e, char *name)
 {
   size_t shstrndx;
   Elf_Scn *scn;

@@ -5,7 +5,7 @@
 
 
 
-size_t elfu_scnSizeFile(const GElf_Shdr *shdr)
+size_t elfu_gScnSizeFile(const GElf_Shdr *shdr)
 {
   assert(shdr);
 

@@ -4,6 +4,7 @@
 
 #include <libelfu/types.h>
 
+#include <libelfu/generic.h>
 #include <libelfu/elfops.h>
 #include <libelfu/model.h>
 

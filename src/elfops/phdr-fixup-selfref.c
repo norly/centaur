@@ -3,7 +3,7 @@
 #include <libelf.h>
 #include <gelf.h>
 
-void elfu_fixupPhdrSelfRef(Elf *e)
+void elfu_ePhdrFixupSelfRef(Elf *e)
 {
   GElf_Ehdr ehdr;
   size_t i, n;

@@ -31,7 +31,7 @@ void printSegmentsWithSection(Elf *e, Elf_Scn *scn)
       continue;
     }
 
-    if (elfu_segmentContainsSection(&phdr, &shdr)) {
+    if (elfu_ePhdrContainsScn(&phdr, &shdr)) {
       printf("     %d %s\n", i, segmentTypeStr(phdr.p_type));
     }
   }
@@ -42,7 +42,7 @@ void printSection(Elf *e, Elf_Scn *scn)
 {
   printf("  %jd: %s\n",
           (uintmax_t) elf_ndxscn(scn),
-          elfu_sectionName(e, scn));
+          elfu_eScnName(e, scn));
 }
 
 
