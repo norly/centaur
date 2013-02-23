@@ -4,9 +4,7 @@
 
 #include <libelfu/types.h>
 
-#include <libelfu/analysis.h>
-#include <libelfu/fixup.h>
-#include <libelfu/lookup.h>
+#include <libelfu/elfops.h>
 #include <libelfu/model.h>
 
 
