@@ -21,6 +21,14 @@ LDFLAGS  := -lelf
 default: $(EXE)
 
 
+.PHONY: check
+check: $(EXE)
+	$(EXE) $(EXE) -o testexe
+	@cmp $(EXE) testexe
+	@rm testexe
+	@echo "Check successful."
+
+
 .PHONY: debug
 debug: $(EXE)
 	gdb $(EXE) $(shell ps -e | sed "s/^ *\([0-9]\+\) .*$(PROJ).*$$/\1/g;te;d;:e")
