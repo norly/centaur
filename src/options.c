@@ -11,13 +11,14 @@ static void printUsage(char *progname)
   printf("Usage: %s [OPTIONS] <elf-file>\n", progname);
   printf("\n"
           "Options:\n"
-          "  -h, --help                 Print this help message\n"
-          "  -o, --output               Where to write the modified ELF file to\n"
+          "  -h, --help                     Print this help message\n"
+          "  -o, --output                   Where to write the modified ELF file to\n"
           "\n"
-          "      --print-header         Print ELF header\n"
-          "      --print-segments       Print program headers\n"
-          "      --print-sections       Print sections\n"
+          "      --print-header             Print ELF header\n"
+          "      --print-segments           Print program headers\n"
+          "      --print-sections           Print sections\n"
           "\n"
+          "      --insert-before off,sz     Insert spacing at given offset\n"
           "\n");
 }
 
@@ -28,6 +29,7 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
   char *progname = argv[0];
   int c;
   int option_index = 0;
+  char *endptr;
 
   static struct option long_options[] = {
     {"help", 0, 0, 'h'},
@@ -35,6 +37,7 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
     {"print-header", 0, 0, 10001},
     {"print-segments", 0, 0, 10002},
     {"print-sections", 0, 0, 10003},
+    {"insert-before", 1, 0, 10004},
     {NULL, 0, NULL, 0}
   };
 
@@ -55,6 +58,16 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
         break;
       case 10003:
         opts->printSections = 1;
+        break;
+      case 10004:
+        opts->insertBeforeOffs = strtoul(optarg, &endptr, 0);
+        if (endptr[0] != ',') {
+          goto USAGE;
+        }
+        opts->insertBeforeSz = strtoul(endptr + 1, &endptr, 0);
+        if (endptr[0] != '\0' || opts->insertBeforeSz == 0) {
+          goto USAGE;
+        }
         break;
       case '?':
       default:

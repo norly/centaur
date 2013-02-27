@@ -8,6 +8,8 @@ typedef struct {
   int printHeader;
   int printSegments;
   int printSections;
+  unsigned insertBeforeOffs;
+  unsigned insertBeforeSz;
 } CLIOpts;
 
 

@@ -17,4 +17,7 @@ int elfu_mCheck(ElfuElf *me);
 ElfuElf* elfu_mFromElf(Elf *e);
     void elfu_mToElf(ElfuElf *me, Elf *e);
 
+
+GElf_Xword elfu_mInsertBefore(ElfuElf *me, GElf_Off off, GElf_Xword size);
+
 #endif

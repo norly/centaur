@@ -67,12 +67,16 @@ int main(int argc, char **argv)
 
     if (me) {
       printf("Model successfully loaded.\n");
+      elfu_mCheck(me);
+      printf("Input model checked.\n");
+
+      if (opts.insertBeforeSz) {
+        elfu_mInsertBefore(me, opts.insertBeforeOffs, opts.insertBeforeSz);
+      }
 
       elfu_mCheck(me);
-      printf("Model checked.\n");
-
+      printf("Output model checked.\n");
       elfu_mToElf(me, hOut.e);
-
       printf("Model converted to ELF, ready to be written.\n");
     } else {
       printf("Failed to load model.\n");
