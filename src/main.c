@@ -74,6 +74,10 @@ int main(int argc, char **argv)
         elfu_mInsertBefore(me, opts.insertBeforeOffs, opts.insertBeforeSz);
       }
 
+      if (opts.insertAfterSz) {
+        elfu_mInsertAfter(me, opts.insertAfterOffs, opts.insertAfterSz);
+      }
+
       elfu_mCheck(me);
       printf("Output model checked.\n");
       elfu_mToElf(me, hOut.e);

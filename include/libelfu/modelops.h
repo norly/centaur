@@ -19,5 +19,6 @@ ElfuElf* elfu_mFromElf(Elf *e);
 
 
 GElf_Xword elfu_mInsertBefore(ElfuElf *me, GElf_Off off, GElf_Xword size);
+GElf_Xword elfu_mInsertAfter(ElfuElf *me, GElf_Off off, GElf_Xword size);
 
 #endif

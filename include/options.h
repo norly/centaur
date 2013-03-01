@@ -10,6 +10,8 @@ typedef struct {
   int printSections;
   unsigned insertBeforeOffs;
   unsigned insertBeforeSz;
+  unsigned insertAfterOffs;
+  unsigned insertAfterSz;
 } CLIOpts;
 
 
