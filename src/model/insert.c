@@ -161,7 +161,7 @@ GElf_Xword elfu_mInsertAfter(ElfuElf *me, GElf_Off off, GElf_Xword size)
   }
 
   /* For each LOAD header, find clashing headers that need to be
-     remapped to lower memory areas.
+     remapped to higher memory areas.
    */
   CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
     if (mp->phdr.p_type == PT_LOAD) {
