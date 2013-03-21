@@ -52,19 +52,18 @@ static void modelToSection(ElfuScn *ms, Elf *e)
 
 
   /* Data */
-  ElfuData *md;
-  CIRCLEQ_FOREACH(md, &ms->dataList, elem) {
+  if (ms->data.d_buf) {
     Elf_Data *dataOut = elf_newdata(scnOut);
     if (!dataOut) {
       fprintf(stderr, "elf_newdata() failed: %s\n", elf_errmsg(-1));
     }
 
-    dataOut->d_align = md->data.d_align;
-    dataOut->d_buf  = md->data.d_buf;
-    dataOut->d_off  = md->data.d_off;
-    dataOut->d_type = md->data.d_type;
-    dataOut->d_size = md->data.d_size;
-    dataOut->d_version = md->data.d_version;
+    dataOut->d_align = ms->data.d_align;
+    dataOut->d_buf  = ms->data.d_buf;
+    dataOut->d_off  = ms->data.d_off;
+    dataOut->d_type = ms->data.d_type;
+    dataOut->d_size = ms->data.d_size;
+    dataOut->d_version = ms->data.d_version;
   }
 }
 

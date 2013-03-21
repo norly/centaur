@@ -1,5 +1,7 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <libelf.h>
 #include <gelf.h>
@@ -24,14 +26,12 @@ static ElfuPhdr* modelFromPhdr(GElf_Phdr *phdr)
 static ElfuScn* modelFromSection(Elf_Scn *scn)
 {
   ElfuScn *ms;
-  Elf_Data *data;
+
 
   ms = malloc(sizeof(ElfuScn));
   if (!ms) {
     return NULL;
   }
-
-  CIRCLEQ_INIT(&ms->dataList);
 
 
   if (gelf_getshdr(scn, &ms->shdr) != &ms->shdr) {
@@ -40,23 +40,43 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
   }
 
 
-
   /* Copy each data part in source segment */
-  data = elf_rawdata(scn, NULL);
-  while (data) {
-    ElfuData *md;
+  ms->data.d_align = 1;
+  ms->data.d_buf  = NULL;
+  ms->data.d_off  = 0;
+  ms->data.d_type = ELF_T_BYTE;
+  ms->data.d_size = ms->shdr.sh_size;
+  ms->data.d_version = elf_version(EV_NONE);
+  if (ms->shdr.sh_type != SHT_NOBITS
+      && ms->shdr.sh_size > 1) {
+    Elf_Data *data;
 
-    md = malloc(sizeof(ElfuData));
-    if (!md) {
+    ms->data.d_buf = malloc(ms->shdr.sh_size);
+    if (!ms->data.d_buf) {
+      fprintf(stderr, "modelFromSection: Could not allocate data buffer (%jx bytes).\n", ms->shdr.sh_size);
       goto out;
     }
 
-    md->data = *data;
+    /* A non-empty section should contain at least on data block. */
+    data = elf_rawdata(scn, NULL);
 
-    CIRCLEQ_INSERT_TAIL(&ms->dataList, md, elem);
+    assert(data);
 
-    data = elf_rawdata(scn, data);
+    ms->data.d_align = data->d_align;
+    ms->data.d_type = data->d_type;
+    ms->data.d_version = data->d_version;
+
+    while (data) {
+      if (data->d_off + data->d_size > ms->shdr.sh_size) {
+        fprintf(stderr, "modelFromSection: libelf delivered a bogus data blob. Skipping\n");
+      } else {
+        memcpy(ms->data.d_buf + data->d_off, data->d_buf, data->d_size);
+      }
+
+      data = elf_rawdata(scn, data);
+    }
   }
+
 
   return ms;
 

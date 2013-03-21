@@ -15,11 +15,9 @@ char* elfu_mScnName(ElfuElf *me, ElfuScn *ms)
     return NULL;
   }
 
-  if (CIRCLEQ_EMPTY(&me->shstrtab->dataList)) {
+  if (!me->shstrtab->data.d_buf) {
     return NULL;
   }
 
-  /* Don't take multiple data parts into account. */
-  ElfuData *md = me->shstrtab->dataList.cqh_first;
-  return &((char*)md->data.d_buf)[ms->shdr.sh_name];
+  return &((char*)me->shstrtab->data.d_buf)[ms->shdr.sh_name];
 }
