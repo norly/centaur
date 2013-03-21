@@ -12,6 +12,7 @@ typedef struct {
   unsigned insertBeforeSz;
   unsigned insertAfterOffs;
   unsigned insertAfterSz;
+  unsigned expandNobitsOffs;
 } CLIOpts;
 
 

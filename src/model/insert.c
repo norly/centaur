@@ -121,6 +121,10 @@ GElf_Xword elfu_mInsertBefore(ElfuElf *me, GElf_Off off, GElf_Xword size)
  *
  * PHDRs will be patched such that everything AFTER off is shifted to
  * higher addresses, making space for the new data in-between.
+ *
+ * CAUTION: This also moves NOBITS sections. If such are present,
+ *          use mExpandNobits() first and then inject at the end of
+ *          the expansion site.
  */
 GElf_Xword elfu_mInsertAfter(ElfuElf *me, GElf_Off off, GElf_Xword size)
 {

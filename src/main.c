@@ -70,6 +70,10 @@ int main(int argc, char **argv)
       elfu_mCheck(me);
       printf("Input model checked.\n");
 
+      if (opts.expandNobitsOffs) {
+        elfu_mExpandNobits(me, opts.expandNobitsOffs);
+      }
+
       if (opts.insertBeforeSz) {
         elfu_mInsertBefore(me, opts.insertBeforeOffs, opts.insertBeforeSz);
       }

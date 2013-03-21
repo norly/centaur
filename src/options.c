@@ -23,6 +23,7 @@ static void printUsage(char *progname)
           "    off: File offset, not within any structure (headers or sections).\n"
           "    sz:  A multiple of the maximum alignment of all PHDRs.\n"
           "\n"
+          "      --expand-nobits off        Expand virtual areas (NOBITS sections and similar PHDRs).\n"
           "      --insert-before off,sz     Insert spacing at given offset,\n"
           "                                 mapping everything before it to lower mem addresses.\n"
           "      --insert-after  off,sz     Insert spacing at given offset,\n"
@@ -47,6 +48,7 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
     {"print-sections", 0, 0, 10003},
     {"insert-before", 1, 0, 10004},
     {"insert-after", 1, 0, 10005},
+    {"expand-nobits", 1, 0, 10006},
     {NULL, 0, NULL, 0}
   };
 
@@ -85,6 +87,12 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
         }
         opts->insertAfterSz = strtoul(endptr + 1, &endptr, 0);
         if (endptr[0] != '\0' || opts->insertAfterSz == 0) {
+          goto USAGE;
+        }
+        break;
+      case 10006:
+        opts->expandNobitsOffs = strtoul(optarg, &endptr, 0);
+        if (endptr[0] != '\0' || opts->expandNobitsOffs < 1) {
           goto USAGE;
         }
         break;
