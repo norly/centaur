@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 
 
   /* Now that we have a (hopefully) sane environment, execute commands.
-   * Printing will ahve to be reimplemented based on the memory model.
+   * Printing will have to be reimplemented based on the memory model.
    */
   if (opts.printHeader) {
     printHeader(hIn.e);
