@@ -1,8 +1,8 @@
 #ifndef __LIBELFU_ELFOPS_H_
 #define __LIBELFU_ELFOPS_H_
 
-#include <libelf.h>
-#include <gelf.h>
+#include <libelf/libelf.h>
+#include <libelf/gelf.h>
 
 #include <libelfu/types.h>
 

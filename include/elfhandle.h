@@ -1,7 +1,7 @@
 #ifndef __ELFHANDLE_H__
 #define __ELFHANDLE_H__
 
-#include <libelf.h>
+#include <libelf/libelf.h>
 
 typedef struct {
   int fd;

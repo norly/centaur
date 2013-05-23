@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <sys/types.h>
-#include <gelf.h>
+#include <libelf/gelf.h>
 #include <libelfu/libelfu.h>
 
 

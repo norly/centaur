@@ -1,7 +1,7 @@
 #ifndef __PRINTING_H__
 #define __PRINTING_H__
 
-#include <libelf.h>
+#include <libelf/libelf.h>
 
 
 void printHeader(Elf *e);

@@ -11,7 +11,7 @@ HEADERS += $(shell find $(SRCDIR)/ -iname "*.h")
 SOURCES := $(shell find $(SRCDIR)/ -iname "*.c")
 OBJS    := $(patsubst %.c, $(BUILDDIR)/%.o, $(SOURCES))
 
-INCLUDES := $(patsubst %, -I%, $(INCLUDEDIR) $(SRCDIR)) -I /usr/include/libelf
+INCLUDES := $(patsubst %, -I%, $(INCLUDEDIR) $(SRCDIR))
 CFLAGS   := -g -Wall
 LDFLAGS  := -lelf
 

@@ -2,7 +2,7 @@
 #define __LIBELFU_MODELOPS_H__
 
 #include <elf.h>
-#include <gelf.h>
+#include <libelf/gelf.h>
 
 #include <libelfu/modeltypes.h>
 
