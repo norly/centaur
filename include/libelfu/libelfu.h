@@ -9,5 +9,6 @@
 #include <libelfu/modeltypes.h>
 #include <libelfu/modelops.h>
 
+#include <libelfu/debug.h>
 
 #endif

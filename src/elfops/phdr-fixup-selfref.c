@@ -1,7 +1,8 @@
-#include <stdio.h>
-
 #include <libelf/libelf.h>
 #include <libelf/gelf.h>
+
+#include <libelfu/debug.h>
+
 
 void elfu_ePhdrFixupSelfRef(Elf *e)
 {
@@ -9,19 +10,19 @@ void elfu_ePhdrFixupSelfRef(Elf *e)
   size_t i, n;
 
   if (!gelf_getehdr(e, &ehdr)) {
-    fprintf(stderr, "gelf_getehdr() failed: %s.", elf_errmsg(-1));
+    ELFU_WARNELF("gelf_getehdr");
     return;
   }
 
   if (elf_getphdrnum(e, &n)) {
-    fprintf(stderr, "elf_getphdrnum() failed: %s\n", elf_errmsg(-1));
+    ELFU_WARNELF("elf_getphdrnum");
   }
 
   for (i = 0; i < n; i++) {
     GElf_Phdr phdr;
 
     if (gelf_getphdr(e, i, &phdr) != &phdr) {
-      fprintf(stderr, "gelf_getphdr() failed for #%d: %s\n", i, elf_errmsg(-1));
+      ELFU_WARN("gelf_getphdr() failed for #%d: %s\n", i, elf_errmsg(-1));
       continue;
     }
 
@@ -31,7 +32,7 @@ void elfu_ePhdrFixupSelfRef(Elf *e)
       phdr.p_memsz = phdr.p_filesz;
 
       if (!gelf_update_phdr (e, i, &phdr)) {
-        fprintf(stderr, "gelf_update_ehdr() failed: %s\n", elf_errmsg(-1));
+        ELFU_WARNELF("gelf_update_ehdr");
       }
     }
   }

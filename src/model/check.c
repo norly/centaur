@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <libelfu/libelfu.h>
@@ -54,7 +53,7 @@ int elfu_mCheck(ElfuElf *me)
   numSecs = elfu_mCountScns(me);
   sortedSecs = malloc(numSecs * sizeof(*sortedSecs));
   if (!sortedSecs) {
-    fprintf(stderr, "elfu_check: Failed to allocate memory.\n");
+    ELFU_WARN("elfu_check: Failed to allocate memory.\n");
   }
 
   i = 0;
@@ -71,9 +70,9 @@ int elfu_mCheck(ElfuElf *me)
   for (i = 0; i < numSecs - 1; i++) {
     if (sortedSecs[i]->shdr.sh_offset + elfu_gScnSizeFile(&sortedSecs[i]->shdr)
         > sortedSecs[i+1]->shdr.sh_offset) {
-      fprintf(stderr, "elfu_check: Found overlapping sections: %s and %s.\n",
-                      elfu_mScnName(me, sortedSecs[i]),
-                      elfu_mScnName(me, sortedSecs[i+1]));
+      ELFU_WARN("elfu_check: Found overlapping sections: %s and %s.\n",
+                elfu_mScnName(me, sortedSecs[i]),
+                elfu_mScnName(me, sortedSecs[i+1]));
     }
   }
 
@@ -81,8 +80,8 @@ int elfu_mCheck(ElfuElf *me)
   /* Check for sections overlapping with EHDR */
   for (i = 0; i < numSecs; i++) {
     if (sortedSecs[i]->shdr.sh_offset < me->ehdr.e_ehsize) {
-      fprintf(stderr, "elfu_check: Found section overlapping with EHDR: %s.\n",
-                      elfu_mScnName(me, sortedSecs[i]));
+      ELFU_WARN("elfu_check: Found section overlapping with EHDR: %s.\n",
+                elfu_mScnName(me, sortedSecs[i]));
     }
   }
 
@@ -93,8 +92,8 @@ int elfu_mCheck(ElfuElf *me)
                       elfu_gScnSizeFile(&sortedSecs[i]->shdr),
                       me->ehdr.e_phoff,
                       me->ehdr.e_phentsize * me->ehdr.e_phnum)) {
-      fprintf(stderr, "elfu_check: Found section overlapping with PHDRs: %s.\n",
-                      elfu_mScnName(me, sortedSecs[i]));
+      ELFU_WARN("elfu_check: Found section overlapping with PHDRs: %s.\n",
+                elfu_mScnName(me, sortedSecs[i]));
     }
   }
 

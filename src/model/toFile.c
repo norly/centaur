@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <libelf/libelf.h>
 #include <libelf/gelf.h>
@@ -18,14 +17,14 @@ static void modelToPhdrs(ElfuElf *me, Elf *e)
   }
 
   if (!gelf_newphdr(e, i)) {
-    fprintf(stderr, "gelf_newphdr() failed: %s\n", elf_errmsg(-1));
+    ELFU_WARNELF("gelf_newphdr");
   }
 
   /* Copy PHDRs */
   i = 0;
   CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
     if (!gelf_update_phdr (e, i, &mp->phdr)) {
-      fprintf(stderr, "gelf_update_phdr() failed: %s\n", elf_errmsg(-1));
+      ELFU_WARNELF("gelf_update_phdr");
     }
 
     i++;
@@ -40,14 +39,14 @@ static void modelToSection(ElfuScn *ms, Elf *e)
 
   scnOut = elf_newscn(e);
   if (!scnOut) {
-    fprintf(stderr, "elf_newscn() failed: %s\n", elf_errmsg(-1));
+    ELFU_WARNELF("elf_newscn");
     return;
   }
 
 
   /* SHDR */
   if (!gelf_update_shdr(scnOut, &ms->shdr)) {
-    fprintf(stderr, "gelf_update_shdr() failed: %s\n", elf_errmsg(-1));
+    ELFU_WARNELF("gelf_update_shdr");
   }
 
 
@@ -55,7 +54,7 @@ static void modelToSection(ElfuScn *ms, Elf *e)
   if (ms->data.d_buf) {
     Elf_Data *dataOut = elf_newdata(scnOut);
     if (!dataOut) {
-      fprintf(stderr, "elf_newdata() failed: %s\n", elf_errmsg(-1));
+      ELFU_WARNELF("elf_newdata");
     }
 
     dataOut->d_align = ms->data.d_align;
@@ -82,11 +81,11 @@ void elfu_mToElf(ElfuElf *me, Elf *e)
 
   /* EHDR */
   if (!gelf_newehdr(e, me->elfclass)) {
-    fprintf(stderr, "gelf_newehdr() failed: %s\n", elf_errmsg(-1));
+    ELFU_WARNELF("gelf_newehdr");
   }
 
   if (!gelf_update_ehdr(e, &me->ehdr)) {
-    fprintf(stderr, "gelf_update_ehdr() failed: %s\n", elf_errmsg(-1));
+    ELFU_WARNELF("gelf_update_ehdr");
   }
 
 

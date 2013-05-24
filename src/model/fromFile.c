@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -35,7 +34,7 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 
 
   if (gelf_getshdr(scn, &ms->shdr) != &ms->shdr) {
-    fprintf(stderr, "gelf_getshdr() failed: %s\n", elf_errmsg(-1));
+    ELFU_WARN("gelf_getshdr() failed: %s\n", elf_errmsg(-1));
     goto out;
   }
 
@@ -53,7 +52,7 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 
     ms->data.d_buf = malloc(ms->shdr.sh_size);
     if (!ms->data.d_buf) {
-      fprintf(stderr, "modelFromSection: Could not allocate data buffer (%jx bytes).\n", ms->shdr.sh_size);
+      ELFU_WARN("modelFromSection: Could not allocate data buffer (%jx bytes).\n", ms->shdr.sh_size);
       goto out;
     }
 
@@ -68,7 +67,7 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 
     while (data) {
       if (data->d_off + data->d_size > ms->shdr.sh_size) {
-        fprintf(stderr, "modelFromSection: libelf delivered a bogus data blob. Skipping\n");
+        ELFU_WARN("modelFromSection: libelf delivered a bogus data blob. Skipping\n");
       } else {
         memcpy(ms->data.d_buf + data->d_off, data->d_buf, data->d_size);
       }
@@ -113,11 +112,11 @@ ElfuElf* elfu_mFromElf(Elf *e)
    */
   me->elfclass = gelf_getclass(e);
   if (me->elfclass == ELFCLASSNONE) {
-    fprintf(stderr, "getclass() failed: %s\n", elf_errmsg(-1));
+    ELFU_WARNELF("getclass");
   }
 
   if (!gelf_getehdr(e, &me->ehdr)) {
-    fprintf(stderr, "gelf_getehdr() failed: %s\n", elf_errmsg(-1));
+    ELFU_WARNELF("gelf_getehdr");
     goto out;
   }
 
@@ -149,7 +148,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
    * Segments
    */
   if (elf_getphdrnum(e, &n)) {
-    fprintf(stderr, "elf_getphdrnum() failed: %s\n", elf_errmsg(-1));
+    ELFU_WARNELF("elf_getphdrnum");
   }
 
   for (i = 0; i < n; i++) {
@@ -157,7 +156,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
     ElfuPhdr *mp;
 
     if (gelf_getphdr(e, i, &phdr) != &phdr) {
-      fprintf(stderr, "gelf_getphdr() failed for #%d: %s\n", i, elf_errmsg(-1));
+      ELFU_WARN("gelf_getphdr() failed for #%d: %s\n", i, elf_errmsg(-1));
       break;
     }
 

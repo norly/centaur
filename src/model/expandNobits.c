@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -33,7 +32,7 @@ void elfu_mExpandNobits(ElfuElf *me, GElf_Off off)
          * to be filled. This means that it relies on the NOBITS area
          * being actually 0 bytes, and the expansion would ruin it.
          */
-        fprintf(stderr, "mExpandNobits: Found PHDR spanning expansion offset. Aborting.\n");
+        ELFU_WARN("mExpandNobits: Found PHDR spanning expansion offset. Aborting.\n");
         return;
       }
     } else {
@@ -101,7 +100,7 @@ void elfu_mExpandNobits(ElfuElf *me, GElf_Off off)
         ms->data.d_buf = malloc(ms->shdr.sh_size);
         memset(ms->data.d_buf, '\0', ms->shdr.sh_size);
         if (!ms->data.d_buf) {
-          fprintf(stderr, "mExpandNobits: Could not allocate %jd bytes for NOBITS expansion.\n", ms->shdr.sh_size);
+          ELFU_WARN("mExpandNobits: Could not allocate %jd bytes for NOBITS expansion.\n", ms->shdr.sh_size);
         }
 
         ms->data.d_align = 1;

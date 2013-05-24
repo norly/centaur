@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <libelf/libelf.h>
@@ -56,7 +55,7 @@ Elf_Scn* elfu_eScnLastInSegment(Elf *e, GElf_Phdr *phdr)
     GElf_Shdr shdr;
 
     if (gelf_getshdr(scn, &shdr) != &shdr) {
-      fprintf(stderr, "gelf_getshdr() failed: %s\n", elf_errmsg(-1));
+      ELFU_WARNELF("gelf_getshdr");
       continue;
     }
 
