@@ -6,4 +6,6 @@
 
 size_t elfu_gScnSizeFile(const GElf_Shdr *shdr);
 
+int elfu_gPhdrContainsScn(GElf_Phdr *phdr, GElf_Shdr *shdr);
+
 #endif

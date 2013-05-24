@@ -4,7 +4,7 @@
 #include <libelfu/libelfu.h>
 
 
-int elfu_ePhdrContainsScn(GElf_Phdr *phdr, GElf_Shdr *shdr)
+int elfu_gPhdrContainsScn(GElf_Phdr *phdr, GElf_Shdr *shdr)
 {
   size_t secStart = shdr->sh_offset;
   size_t secEnd   = shdr->sh_offset + shdr->sh_size;
