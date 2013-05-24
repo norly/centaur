@@ -28,6 +28,9 @@ static void printUsage(char *progname)
           "                                 mapping everything before it to lower mem addresses.\n"
           "      --insert-after  off,sz     Insert spacing at given offset,\n"
           "                                 mapping everything after it to higher mem addresses.\n"
+          "\n"
+          "High-level insertion:\n"
+          "      --reladd        obj.o      Automatically insert object file contents\n"
           "\n");
 }
 
@@ -49,6 +52,7 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
     {"insert-before", 1, 0, 10004},
     {"insert-after", 1, 0, 10005},
     {"expand-nobits", 1, 0, 10006},
+    {"reladd", 1, 0, 10007},
     {NULL, 0, NULL, 0}
   };
 
@@ -95,6 +99,9 @@ void parseOptions(CLIOpts *opts, int argc, char **argv)
         if (endptr[0] != '\0' || opts->expandNobitsOffs < 1) {
           goto USAGE;
         }
+        break;
+      case 10007:
+        opts->fnReladd = optarg;
         break;
       case '?':
       default:

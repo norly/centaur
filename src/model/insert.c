@@ -20,7 +20,7 @@
  * the same address in memory, and everything BEFORE it is shifted to
  * lower addresses, making space for the new data in-between.
  */
-GElf_Xword elfu_mInsertBefore(ElfuElf *me, GElf_Off off, GElf_Xword size)
+GElf_Xword elfu_mInsertSpaceBefore(ElfuElf *me, GElf_Off off, GElf_Xword size)
 {
   ElfuScn *ms;
   ElfuPhdr *mp;
@@ -126,7 +126,7 @@ GElf_Xword elfu_mInsertBefore(ElfuElf *me, GElf_Off off, GElf_Xword size)
  *          use mExpandNobits() first and then inject at the end of
  *          the expansion site.
  */
-GElf_Xword elfu_mInsertAfter(ElfuElf *me, GElf_Off off, GElf_Xword size)
+GElf_Xword elfu_mInsertSpaceAfter(ElfuElf *me, GElf_Off off, GElf_Xword size)
 {
   ElfuScn *ms;
   ElfuPhdr *mp;
@@ -210,4 +210,75 @@ GElf_Xword elfu_mInsertAfter(ElfuElf *me, GElf_Off off, GElf_Xword size)
   }
 
   return size;
+}
+
+
+
+
+
+/* Update cross-references */
+static void shiftSections(ElfuElf *me, ElfuScn *first)
+{
+  ElfuScn *ms = first;
+  size_t firstIndex = elfu_mScnIndex(me, first);
+
+  do {
+    if (ms == me->shstrtab) {
+      me->ehdr.e_shstrndx++;
+    }
+
+    ms = CIRCLEQ_LOOP_NEXT(&me->scnList, ms, elem);
+  } while (ms != CIRCLEQ_FIRST(&me->scnList));
+
+  CIRCLEQ_FOREACH(ms, &me->scnList, elem) {
+    switch (ms->shdr.sh_type) {
+      case SHT_REL:
+      case SHT_RELA:
+        if (ms->shdr.sh_info >= firstIndex) {
+          ms->shdr.sh_info++;
+        }
+      case SHT_DYNAMIC:
+      case SHT_HASH:
+      case SHT_SYMTAB:
+      case SHT_DYNSYM:
+      case SHT_GNU_versym:
+      case SHT_GNU_verdef:
+      case SHT_GNU_verneed:
+        if (ms->shdr.sh_link >= firstIndex) {
+          ms->shdr.sh_link++;
+        }
+    }
+  }
+}
+
+
+/*
+ * Insert a section into an ELF model, /before/ a given other section
+ */
+void elfu_mInsertScnInChainBefore(ElfuElf *me, ElfuScn *oldscn, ElfuScn *newscn)
+{
+  assert(me);
+  assert(oldscn);
+  assert(newscn);
+
+  shiftSections(me, oldscn);
+
+  CIRCLEQ_INSERT_BEFORE(&me->scnList, oldscn, newscn, elem);
+}
+
+
+/*
+ * Insert a section into an ELF model, /after/ a given other section
+ */
+void elfu_mInsertScnInChainAfter(ElfuElf *me, ElfuScn *oldscn, ElfuScn *newscn)
+{
+  assert(me);
+  assert(oldscn);
+  assert(newscn);
+
+  if (oldscn != CIRCLEQ_LAST(&me->scnList)) {
+    shiftSections(me, CIRCLEQ_NEXT(oldscn, elem));
+  }
+
+  CIRCLEQ_INSERT_AFTER(&me->scnList, oldscn, newscn, elem);
 }

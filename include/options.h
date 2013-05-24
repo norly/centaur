@@ -13,6 +13,7 @@ typedef struct {
   unsigned insertAfterOffs;
   unsigned insertAfterSz;
   unsigned expandNobitsOffs;
+  char *fnReladd;
 } CLIOpts;
 
 

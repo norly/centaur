@@ -76,11 +76,33 @@ int main(int argc, char **argv)
     }
 
     if (opts.insertBeforeSz) {
-      elfu_mInsertBefore(me, opts.insertBeforeOffs, opts.insertBeforeSz);
+      elfu_mInsertSpaceBefore(me, opts.insertBeforeOffs, opts.insertBeforeSz);
     }
 
     if (opts.insertAfterSz) {
-      elfu_mInsertAfter(me, opts.insertAfterOffs, opts.insertAfterSz);
+      elfu_mInsertSpaceAfter(me, opts.insertAfterOffs, opts.insertAfterSz);
+    }
+
+    if (opts.fnReladd) {
+      ELFHandles hRel = { 0 };
+      ElfuElf *mrel = NULL;
+
+      openElf(&hRel, opts.fnReladd, ELF_C_READ);
+      if (!hRel.e) {
+        printf("--reladd: Failed to open file for --reladd, skipping operation.\n");
+      } else {
+        mrel = elfu_mFromElf(hRel.e);
+        closeElf(&hRel);
+        if (!me) {
+          printf("--reladd: Failed to load model for --reladd, skipping operation.\n");
+        } else {
+          printf("--reladd: Model successfully loaded.\n");
+          elfu_mCheck(mrel);
+          printf("--reladd: Input model checked.\n");
+          elfu_mReladd(me, mrel);
+        }
+      }
+
     }
 
     elfu_mCheck(me);
