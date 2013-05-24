@@ -98,6 +98,10 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *ms)
           } else {
             injOffset = firstScn->shdr.sh_offset;
 
+            ELFU_INFO("Inserting %s at offset 0x%jx...\n",
+                      elfu_mScnName(mrel, ms),
+                      injOffset);
+
             /* Make space */
             elfu_mInsertSpaceBefore(me, injOffset, ms->shdr.sh_size);
 
@@ -117,12 +121,19 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *ms)
           } else {
             injOffset = lastScn->shdr.sh_offset + elfu_gScnSizeFile(&lastScn->shdr);
 
+            ELFU_INFO("Expanding at offset 0x%jx...\n",
+                      injOffset);
+
             /* Expand NOBITS sections at injection site, if any. */
             elfu_mExpandNobits(me, injOffset);
 
             /* Recalculate injOffset in case we expanded a NOBITS section */
             lastScn = elfu_mScnLastInSegment(me, injAnchor);
             injOffset = lastScn->shdr.sh_offset + elfu_gScnSizeFile(&lastScn->shdr);
+
+            ELFU_INFO("Inserting %s at offset 0x%jx...\n",
+                      elfu_mScnName(mrel, ms),
+                      injOffset);
 
             /* Make space */
             elfu_mInsertSpaceAfter(me, injOffset, ms->shdr.sh_size);
