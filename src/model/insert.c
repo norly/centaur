@@ -27,6 +27,11 @@ GElf_Xword elfu_mInsertSpaceBefore(ElfuElf *me, GElf_Off off, GElf_Xword size)
 
   assert(me);
 
+  /* Round up size to 4096 bytes to keep page alignment on x86 when
+   * remapping existing data to lower addresses. */
+  size += (4096 - (size % 4096)) % 4096;
+  // TODO: Find alignment size by checking p_align in PHDRs
+
   /* Move SHDRs and PHDRs */
   if (me->ehdr.e_shoff >= off) {
     me->ehdr.e_shoff += size;
