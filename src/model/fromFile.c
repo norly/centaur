@@ -11,8 +11,11 @@ static ElfuPhdr* modelFromPhdr(GElf_Phdr *phdr)
 {
   ElfuPhdr *mp;
 
+  assert(phdr);
+
   mp = malloc(sizeof(ElfuPhdr));
   if (!mp) {
+    ELFU_WARN("modelFromPhdr: malloc() failed for ElfuPhdr.\n");
     return NULL;
   }
 
@@ -26,17 +29,16 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 {
   ElfuScn *ms;
 
+  assert(scn);
 
   ms = malloc(sizeof(ElfuScn));
   if (!ms) {
-    return NULL;
+    ELFU_WARN("modelFromSection: malloc() failed for ElfuScn.\n");
+    goto ERROR;
   }
 
 
-  if (gelf_getshdr(scn, &ms->shdr) != &ms->shdr) {
-    ELFU_WARN("gelf_getshdr() failed: %s\n", elf_errmsg(-1));
-    goto out;
-  }
+  assert(gelf_getshdr(scn, &ms->shdr) == &ms->shdr);
 
 
   /* Copy each data part in source segment */
@@ -47,18 +49,17 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
   ms->data.d_size = ms->shdr.sh_size;
   ms->data.d_version = elf_version(EV_NONE);
   if (ms->shdr.sh_type != SHT_NOBITS
-      && ms->shdr.sh_size > 1) {
+      && ms->shdr.sh_size > 0) {
     Elf_Data *data;
 
     ms->data.d_buf = malloc(ms->shdr.sh_size);
     if (!ms->data.d_buf) {
-      ELFU_WARN("modelFromSection: Could not allocate data buffer (%jx bytes).\n", ms->shdr.sh_size);
-      goto out;
+      ELFU_WARN("modelFromSection: malloc() failed for data buffer (%jx bytes).\n", ms->shdr.sh_size);
+      goto ERROR;
     }
 
-    /* A non-empty section should contain at least on data block. */
+    /* A non-empty section should contain at least one data block. */
     data = elf_rawdata(scn, NULL);
-
     assert(data);
 
     ms->data.d_align = data->d_align;
@@ -79,8 +80,10 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 
   return ms;
 
-  out:
-  // FIXME
+  ERROR:
+  if (ms) {
+    free(ms);
+  }
   return NULL;
 }
 
@@ -90,96 +93,92 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 ElfuElf* elfu_mFromElf(Elf *e)
 {
   ElfuElf *me;
-  Elf_Scn *scn;
   size_t shstrndx;
-  size_t i, n;
+  size_t i, numPhdr, numShdr;
 
   assert(e);
   if (elfu_eCheck(e)) {
     goto ERROR;
   }
 
+  me = malloc(sizeof(ElfuElf));
+  if (!me) {
+    ELFU_WARN("elfu_mFromElf: malloc() failed for ElfuElf.\n");
+    goto ERROR;
+  }
+
+
+  /* General stuff */
+  CIRCLEQ_INIT(&me->scnList);
+  CIRCLEQ_INIT(&me->phdrList);
+  me->shstrtab = NULL;
+
+  me->elfclass = gelf_getclass(e);
+  assert(me->elfclass != ELFCLASSNONE);
+  assert(gelf_getehdr(e, &me->ehdr) == &me->ehdr);
+
+
   /* Get the section string table index */
   if (elf_getshdrstrndx(e, &shstrndx) != 0) {
     shstrndx = 0;
   }
 
-  me = malloc(sizeof(ElfuElf));
-  if (!me) {
-    return NULL;
-  }
 
-  CIRCLEQ_INIT(&me->scnList);
-  CIRCLEQ_INIT(&me->phdrList);
-  me->shstrtab = NULL;
-
-  /*
-   * General stuff
-   */
-  me->elfclass = gelf_getclass(e);
-  if (me->elfclass == ELFCLASSNONE) {
-    ELFU_WARNELF("getclass");
-  }
-
-  if (!gelf_getehdr(e, &me->ehdr)) {
-    ELFU_WARNELF("gelf_getehdr");
-    goto ERROR;
-  }
-
-
-  /*
-   * Sections
-   */
-  scn = elf_getscn(e, 1);
-  i = 1;
-  while (scn) {
-    ElfuScn *ms = modelFromSection(scn);
-
-    if (ms) {
-      CIRCLEQ_INSERT_TAIL(&me->scnList, ms, elem);
-      if (i == shstrndx) {
-        me->shstrtab = ms;
-      }
-    } else {
-      goto ERROR;
-    }
-
-    scn = elf_nextscn(e, scn);
-    i++;
-  }
-
-
-
-  /*
-   * Segments
-   */
-  if (elf_getphdrnum(e, &n)) {
-    ELFU_WARNELF("elf_getphdrnum");
-  }
-
-  for (i = 0; i < n; i++) {
+  /* Load segments */
+  assert(!elf_getphdrnum(e, &numPhdr));
+  for (i = 0; i < numPhdr; i++) {
     GElf_Phdr phdr;
     ElfuPhdr *mp;
 
-    if (gelf_getphdr(e, i, &phdr) != &phdr) {
-      ELFU_WARN("gelf_getphdr() failed for #%d: %s\n", i, elf_errmsg(-1));
-      break;
-    }
+    assert(gelf_getphdr(e, i, &phdr) == &phdr);
 
     mp = modelFromPhdr(&phdr);
-
-    if (mp) {
-      CIRCLEQ_INSERT_TAIL(&me->phdrList, mp, elem);
-    } else {
+    if (!mp) {
       goto ERROR;
     }
+
+    CIRCLEQ_INSERT_TAIL(&me->phdrList, mp, elem);
   }
+
+
+  /* Load sections */
+  assert(!elf_getshdrnum(e, &numShdr));
+  for (i = 1; i < numShdr; i++) {
+    Elf_Scn *scn;
+    ElfuScn *ms;
+
+    scn = elf_getscn(e, i);
+    assert(scn);
+
+    ms = modelFromSection(scn);
+    if (!ms) {
+      goto ERROR;
+    }
+
+    CIRCLEQ_INSERT_TAIL(&me->scnList, ms, elem);
+    if (i == shstrndx) {
+      me->shstrtab = ms;
+    }
+  }
+
+
+  /* Find sh_link dependencies */
+
+
+  /* Sort sections by offset */
+
+
+  /* Find PHDR -> Section dependencies */
+
+
 
   return me;
 
 
   ERROR:
-  // TODO: Free data structures
+  if (me) {
+    // TODO: Free data structures
+  }
 
   ELFU_WARN("elfu_mFromElf: Failed to load file.\n");
   return NULL;
