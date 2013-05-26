@@ -94,6 +94,12 @@ ElfuElf* elfu_mFromElf(Elf *e)
   size_t shstrndx;
   size_t i, n;
 
+  assert(e);
+  if (elfu_eCheck(e)) {
+    goto ERROR;
+  }
+
+  /* Get the section string table index */
   if (elf_getshdrstrndx(e, &shstrndx) != 0) {
     shstrndx = 0;
   }
@@ -117,7 +123,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
 
   if (!gelf_getehdr(e, &me->ehdr)) {
     ELFU_WARNELF("gelf_getehdr");
-    goto out;
+    goto ERROR;
   }
 
 
@@ -135,7 +141,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
         me->shstrtab = ms;
       }
     } else {
-      goto out;
+      goto ERROR;
     }
 
     scn = elf_nextscn(e, scn);
@@ -165,15 +171,16 @@ ElfuElf* elfu_mFromElf(Elf *e)
     if (mp) {
       CIRCLEQ_INSERT_TAIL(&me->phdrList, mp, elem);
     } else {
-      goto out;
+      goto ERROR;
     }
   }
 
-
-
   return me;
 
-  out:
-  // FIXME
+
+  ERROR:
+  // TODO: Free data structures
+
+  ELFU_WARN("elfu_mFromElf: Failed to load file.\n");
   return NULL;
 }

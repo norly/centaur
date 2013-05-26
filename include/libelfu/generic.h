@@ -3,9 +3,22 @@
 
 #include <libelf/gelf.h>
 
+#define OFFS_END(off, sz) ((off) + (sz))
 
-size_t elfu_gScnSizeFile(const GElf_Shdr *shdr);
+#define OVERLAPPING(off1, sz1, off2, sz2) \
+  (!((off1) == (off2) && ((sz1 == 0) || (sz2 == 0))) \
+   && (((off1) <= (off2) && (off2) < OFFS_END((off1), (sz1))) \
+       || ((off2) <= (off1) && (off1) < OFFS_END((off2), (sz2)))) \
+  )
+
+#define FULLY_OVERLAPPING(off1, sz1, off2, sz2) \
+  (((off1) <= (off2) && OFFS_END((off2), (sz2)) <= OFFS_END((off1), (sz1))) \
+   || ((off2) <= (off1) && OFFS_END((off1), (sz1)) <= OFFS_END((off2), (sz2))))
+
+
 
 int elfu_gPhdrContainsScn(GElf_Phdr *phdr, GElf_Shdr *shdr);
+
+size_t elfu_gScnSizeFile(const GElf_Shdr *shdr);
 
 #endif

@@ -7,6 +7,8 @@
 #include <libelfu/types.h>
 
 
+int elfu_eCheck(Elf *e);
+
    char* elfu_eScnName(Elf *e, Elf_Scn *scn);
 Elf_Scn* elfu_eScnByName(Elf *e, char *name);
 
