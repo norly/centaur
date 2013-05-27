@@ -20,7 +20,14 @@
 #define SCNFILESIZE(shdr) ((shdr)->sh_type == SHT_NOBITS ? 0 : (shdr)->sh_size)
 
 
-int elfu_gPhdrContainsScn(GElf_Phdr *phdr, GElf_Shdr *shdr);
+
+#define PHDR_CONTAINS_SCN_IN_MEMORY(phdr, shdr) \
+  (((phdr)->p_vaddr) <= ((shdr)->sh_addr) \
+   && OFFS_END((shdr)->sh_addr, (shdr)->sh_size) <= OFFS_END((phdr)->p_vaddr, (phdr)->p_memsz))
+
+#define PHDR_CONTAINS_SCN_IN_FILE(phdr, shdr) \
+  (((phdr)->p_offset) <= ((shdr)->sh_offset) \
+   && OFFS_END((shdr)->sh_offset, SCNFILESIZE(shdr)) <= OFFS_END((phdr)->p_offset, (phdr)->p_filesz))
 
 
 #endif

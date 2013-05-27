@@ -31,7 +31,7 @@ void printSegmentsWithSection(Elf *e, Elf_Scn *scn)
       continue;
     }
 
-    if (elfu_gPhdrContainsScn(&phdr, &shdr)) {
+    if (PHDR_CONTAINS_SCN_IN_MEMORY(&phdr, &shdr)) {
       printf("     %d %s\n", i, segmentTypeStr(phdr.p_type));
     }
   }

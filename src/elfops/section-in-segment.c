@@ -25,7 +25,7 @@ Elf_Scn* elfu_eScnFirstInSegment(Elf *e, GElf_Phdr *phdr)
     }
 
     if (shdr.sh_offset == phdr->p_offset
-        && elfu_gPhdrContainsScn(phdr, &shdr)) {
+        && PHDR_CONTAINS_SCN_IN_MEMORY(phdr, &shdr)) {
       return scn;
     }
 
@@ -59,7 +59,7 @@ Elf_Scn* elfu_eScnLastInSegment(Elf *e, GElf_Phdr *phdr)
       continue;
     }
 
-    if (elfu_gPhdrContainsScn(phdr, &shdr)) {
+    if (PHDR_CONTAINS_SCN_IN_MEMORY(phdr, &shdr)) {
       if (!last) {
         last = scn;
       } else {
