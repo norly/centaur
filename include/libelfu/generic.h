@@ -17,8 +17,10 @@
 
 
 
+#define SCNFILESIZE(shdr) ((shdr)->sh_type == SHT_NOBITS ? 0 : (shdr)->sh_size)
+
+
 int elfu_gPhdrContainsScn(GElf_Phdr *phdr, GElf_Shdr *shdr);
 
-size_t elfu_gScnSizeFile(const GElf_Shdr *shdr);
 
 #endif

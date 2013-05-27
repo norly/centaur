@@ -68,7 +68,7 @@ int elfu_mCheck(ElfuElf *me)
 
   /* Check for overlapping sections */
   for (i = 0; i < numSecs - 1; i++) {
-    if (sortedSecs[i]->shdr.sh_offset + elfu_gScnSizeFile(&sortedSecs[i]->shdr)
+    if (sortedSecs[i]->shdr.sh_offset + SCNFILESIZE(&sortedSecs[i]->shdr)
         > sortedSecs[i+1]->shdr.sh_offset) {
       ELFU_WARN("elfu_check: Found overlapping sections: %s and %s.\n",
                 elfu_mScnName(me, sortedSecs[i]),
@@ -89,7 +89,7 @@ int elfu_mCheck(ElfuElf *me)
   /* Check for sections overlapping with PHDRs */
   for (i = 0; i < numSecs; i++) {
     if (isOverlapping(sortedSecs[i]->shdr.sh_offset,
-                      elfu_gScnSizeFile(&sortedSecs[i]->shdr),
+                      SCNFILESIZE(&sortedSecs[i]->shdr),
                       me->ehdr.e_phoff,
                       me->ehdr.e_phentsize * me->ehdr.e_phnum)) {
       ELFU_WARN("elfu_check: Found section overlapping with PHDRs: %s.\n",

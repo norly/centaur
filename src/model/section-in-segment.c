@@ -44,7 +44,7 @@ ElfuScn* elfu_mScnLastInSegment(ElfuElf *me, ElfuPhdr *mp)
 
   CIRCLEQ_FOREACH(ms, &me->scnList, elem) {
     /* Get section size on disk - for NOBITS sections that is 0 bytes. */
-    size_t size = elfu_gScnSizeFile(&ms->shdr);
+    size_t size = SCNFILESIZE(&ms->shdr);
 
     if (((ms->shdr.sh_offset + size >= mp->phdr.p_offset)
          && (ms->shdr.sh_offset + size <= mp->phdr.p_offset + mp->phdr.p_filesz))) {

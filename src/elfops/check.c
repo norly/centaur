@@ -126,14 +126,14 @@ int elfu_eCheck(Elf *e)
       }
 
       /* Section should not overlap with PHDRs. */
-      if (OVERLAPPING(shdrs[i].sh_offset, elfu_gScnSizeFile(&shdrs[i]),
+      if (OVERLAPPING(shdrs[i].sh_offset, SCNFILESIZE(&shdrs[i]),
                       ehdr.e_phoff, numPhdr * ehdr.e_phentsize)) {
         ELFU_WARN("elfu_eCheck: Section %d overlaps with PHDR.\n", i);
         goto ERROR;
       }
 
       /* Section should not overlap with SHDRs. */
-      if (OVERLAPPING(shdrs[i].sh_offset, elfu_gScnSizeFile(&shdrs[i]),
+      if (OVERLAPPING(shdrs[i].sh_offset, SCNFILESIZE(&shdrs[i]),
                       ehdr.e_shoff, numShdr * ehdr.e_shentsize)) {
         ELFU_WARN("elfu_eCheck: Section %d overlaps with SHDRs.\n", i);
         goto ERROR;
@@ -154,8 +154,8 @@ int elfu_eCheck(Elf *e)
         }
 
         /* Sections must not overlap in file. */
-        if (OVERLAPPING(shdrs[i].sh_offset, elfu_gScnSizeFile(&shdrs[i]),
-                        shdrs[j].sh_offset, elfu_gScnSizeFile(&shdrs[j]))) {
+        if (OVERLAPPING(shdrs[i].sh_offset, SCNFILESIZE(&shdrs[i]),
+                        shdrs[j].sh_offset, SCNFILESIZE(&shdrs[j]))) {
           ELFU_WARN("elfu_eCheck: Sections %d and %d overlap in file.\n", i, j);
           goto ERROR;
         }

@@ -119,7 +119,7 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *ms)
 
             // TODO: Error handling
           } else {
-            injOffset = lastScn->shdr.sh_offset + elfu_gScnSizeFile(&lastScn->shdr);
+            injOffset = lastScn->shdr.sh_offset + SCNFILESIZE(&lastScn->shdr);
 
             ELFU_INFO("Expanding at offset 0x%jx...\n",
                       injOffset);
@@ -129,7 +129,7 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *ms)
 
             /* Recalculate injOffset in case we expanded a NOBITS section */
             lastScn = elfu_mScnLastInSegment(me, injAnchor);
-            injOffset = lastScn->shdr.sh_offset + elfu_gScnSizeFile(&lastScn->shdr);
+            injOffset = lastScn->shdr.sh_offset + SCNFILESIZE(&lastScn->shdr);
 
             ELFU_INFO("Inserting %s at offset 0x%jx...\n",
                       elfu_mScnName(mrel, ms),
