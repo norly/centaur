@@ -61,7 +61,7 @@ int elfu_mCheck(ElfuElf *me)
     sortedSecs[i] = ms;
     i++;
   }
-  assert(i = numSecs);
+  assert(i == numSecs);
 
   qsort(sortedSecs, numSecs, sizeof(*sortedSecs), cmpScnOffs);
 

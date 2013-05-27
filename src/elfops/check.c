@@ -160,6 +160,22 @@ int elfu_eCheck(Elf *e)
           goto ERROR;
         }
       }
+
+      /* Section addr/offset should match parent PHDR.
+       * Find parent PHDR: */
+      for (j = 0; j < numPhdr; j++) {
+        if (PHDR_CONTAINS_SCN_IN_MEMORY(&phdrs[j], &shdrs[i])) {
+          if (!PHDR_CONTAINS_SCN_IN_FILE(&phdrs[j], &shdrs[i])) {
+            ELFU_WARN("elfu_eCheck: Memory/file offsets/sizes are not congruent for SHDR %d, PHDR %d.\n", i, j);
+            goto ERROR;
+          }
+        }
+      }
+
+      /* sh_link members should not point to sections out of range. */
+      if (shdrs[i].sh_link >= numShdr) {
+        ELFU_WARN("elfu_eCheck: Bogus sh_link in SHDR %d.\n", i);
+      }
     }
   }
 

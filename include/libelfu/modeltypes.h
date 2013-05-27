@@ -12,12 +12,17 @@ typedef struct ElfuScn {
 
   Elf_Data data;
 
+  struct ElfuScn *link;
+
+  CIRCLEQ_ENTRY(ElfuScn) elemPhdrToScn;
   CIRCLEQ_ENTRY(ElfuScn) elem;
 } ElfuScn;
 
 
 typedef struct ElfuPhdr {
   GElf_Phdr phdr;
+
+  CIRCLEQ_HEAD(PhdrToScnList, ElfuScn) phdrToScnList;
 
   CIRCLEQ_ENTRY(ElfuPhdr) elem;
 } ElfuPhdr;

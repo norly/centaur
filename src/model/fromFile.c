@@ -7,6 +7,51 @@
 #include <libelfu/libelfu.h>
 
 
+static int cmpScnOffs(const void *ms1, const void *ms2)
+{
+  assert(ms1);
+  assert(ms2);
+
+  ElfuScn *s1 = *(ElfuScn**)ms1;
+  ElfuScn *s2 = *(ElfuScn**)ms2;
+
+  assert(s1);
+  assert(s2);
+
+
+  if (s1->shdr.sh_offset < s2->shdr.sh_offset) {
+    return -1;
+  } else if (s1->shdr.sh_offset == s2->shdr.sh_offset) {
+    return 0;
+  } else /* if (s1->shdr.sh_offset > s2->shdr.sh_offset) */ {
+    return 1;
+  }
+}
+
+
+
+static ElfuPhdr* parentPhdr(ElfuElf *me, ElfuScn *ms)
+{
+  ElfuPhdr *mp;
+
+  assert(me);
+  assert(ms);
+
+  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
+    if (ms->shdr.sh_addr >= mp->phdr.p_vaddr
+        && OFFS_END(ms->shdr.sh_addr, ms->shdr.sh_size) <= OFFS_END(mp->phdr.p_vaddr, mp->phdr.p_memsz)) {
+      return mp;
+    } else if (ms->shdr.sh_offset >= mp->phdr.p_offset
+               && OFFS_END(ms->shdr.sh_offset, SCNFILESIZE(&ms->shdr)) <= OFFS_END(mp->phdr.p_offset, mp->phdr.p_filesz)
+               && OFFS_END(ms->shdr.sh_offset, ms->shdr.sh_size) <= OFFS_END(mp->phdr.p_offset, mp->phdr.p_memsz)) {
+      return mp;
+    }
+  }
+
+  return NULL;
+}
+
+
 static ElfuPhdr* modelFromPhdr(GElf_Phdr *phdr)
 {
   ElfuPhdr *mp;
@@ -20,6 +65,8 @@ static ElfuPhdr* modelFromPhdr(GElf_Phdr *phdr)
   }
 
   mp->phdr = *phdr;
+
+  CIRCLEQ_INIT(&mp->phdrToScnList);
 
   return mp;
 }
@@ -77,6 +124,8 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
     }
   }
 
+  ms->link = NULL;
+
 
   return ms;
 
@@ -95,6 +144,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
   ElfuElf *me;
   size_t shstrndx;
   size_t i, numPhdr, numShdr;
+  ElfuScn **secArray = NULL;
 
   assert(e);
   if (elfu_eCheck(e)) {
@@ -143,39 +193,73 @@ ElfuElf* elfu_mFromElf(Elf *e)
 
   /* Load sections */
   assert(!elf_getshdrnum(e, &numShdr));
-  for (i = 1; i < numShdr; i++) {
-    Elf_Scn *scn;
-    ElfuScn *ms;
-
-    scn = elf_getscn(e, i);
-    assert(scn);
-
-    ms = modelFromSection(scn);
-    if (!ms) {
+  if (numShdr > 1) {
+    secArray = malloc((numShdr - 1) * sizeof(*secArray));
+    if (!secArray) {
+      ELFU_WARN("elfu_mFromElf: malloc() failed for secArray.\n");
       goto ERROR;
     }
 
-    CIRCLEQ_INSERT_TAIL(&me->scnList, ms, elem);
-    if (i == shstrndx) {
-      me->shstrtab = ms;
+    for (i = 1; i < numShdr; i++) {
+      Elf_Scn *scn;
+      ElfuScn *ms;
+
+      scn = elf_getscn(e, i);
+      assert(scn);
+
+      ms = modelFromSection(scn);
+      if (!ms) {
+        goto ERROR;
+      }
+
+      secArray[i-1] =  ms;
+
+      if (i == shstrndx) {
+        me->shstrtab = ms;
+      }
+    }
+
+
+    /* Find sh_link dependencies */
+    for (i = 0; i < numShdr - 1; i++) {
+      ElfuScn *ms = secArray[i];
+
+      if (ms->shdr.sh_link > 0) {
+        ms->link = secArray[ms->shdr.sh_link - 1];
+      }
+    }
+
+
+    /* Sort sections by file offset */
+    qsort(secArray, numShdr - 1, sizeof(*secArray), cmpScnOffs);
+
+
+    /* Find PHDR -> Section dependencies (needs sorted sections) */
+    for (i = 0; i < numShdr - 1; i++) {
+      ElfuScn *ms = secArray[i];
+
+      ElfuPhdr *parent = parentPhdr(me, ms);
+
+      if (parent) {
+        CIRCLEQ_INSERT_TAIL(&parent->phdrToScnList, ms, elemPhdrToScn);
+      }
+    }
+
+
+    /* Put sections into list of all sections */
+    for (i = 0; i < numShdr - 1; i++) {
+      CIRCLEQ_INSERT_TAIL(&me->scnList, secArray[i], elem);
     }
   }
-
-
-  /* Find sh_link dependencies */
-
-
-  /* Sort sections by offset */
-
-
-  /* Find PHDR -> Section dependencies */
-
 
 
   return me;
 
 
   ERROR:
+  if (secArray) {
+    free(secArray);
+  }
   if (me) {
     // TODO: Free data structures
   }
