@@ -12,7 +12,8 @@ typedef struct ElfuScn {
 
   Elf_Data data;
 
-  struct ElfuScn *link;
+  struct ElfuScn *linkptr;
+  struct ElfuScn *infoptr;
 
   CIRCLEQ_ENTRY(ElfuScn) elemPhdrToScn;
   CIRCLEQ_ENTRY(ElfuScn) elem;

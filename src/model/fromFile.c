@@ -124,7 +124,8 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
     }
   }
 
-  ms->link = NULL;
+  ms->linkptr = NULL;
+  ms->infoptr = NULL;
 
 
   return ms;
@@ -224,8 +225,22 @@ ElfuElf* elfu_mFromElf(Elf *e)
     for (i = 0; i < numShdr - 1; i++) {
       ElfuScn *ms = secArray[i];
 
-      if (ms->shdr.sh_link > 0) {
-        ms->link = secArray[ms->shdr.sh_link - 1];
+      switch (ms->shdr.sh_type) {
+        case SHT_REL:
+        case SHT_RELA:
+          if (ms->shdr.sh_info > 0) {
+            ms->infoptr = secArray[ms->shdr.sh_info - 1];
+          }
+        case SHT_DYNAMIC:
+        case SHT_HASH:
+        case SHT_SYMTAB:
+        case SHT_DYNSYM:
+        case SHT_GNU_versym:
+        case SHT_GNU_verdef:
+        case SHT_GNU_verneed:
+          if (ms->shdr.sh_link > 0) {
+            ms->linkptr = secArray[ms->shdr.sh_link - 1];
+          }
       }
     }
 
