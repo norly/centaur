@@ -38,6 +38,10 @@ static ElfuPhdr* parentPhdr(ElfuElf *me, ElfuScn *ms)
   assert(ms);
 
   CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
+    if (mp->phdr.p_type != PT_LOAD) {
+      continue;
+    }
+
     if (ms->shdr.sh_addr >= mp->phdr.p_vaddr
         && OFFS_END(ms->shdr.sh_addr, ms->shdr.sh_size) <= OFFS_END(mp->phdr.p_vaddr, mp->phdr.p_memsz)) {
       return mp;
