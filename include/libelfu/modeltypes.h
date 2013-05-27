@@ -15,7 +15,7 @@ typedef struct ElfuScn {
   struct ElfuScn *linkptr;
   struct ElfuScn *infoptr;
 
-  CIRCLEQ_ENTRY(ElfuScn) elemPhdrToScn;
+  CIRCLEQ_ENTRY(ElfuScn) elemChildScn;
   CIRCLEQ_ENTRY(ElfuScn) elem;
 } ElfuScn;
 
@@ -23,8 +23,10 @@ typedef struct ElfuScn {
 typedef struct ElfuPhdr {
   GElf_Phdr phdr;
 
-  CIRCLEQ_HEAD(PhdrToScnList, ElfuScn) phdrToScnList;
+  CIRCLEQ_HEAD(ChildScnList, ElfuScn) childScnList;
+  CIRCLEQ_HEAD(ChildPhdrList, ElfuPhdr) childPhdrList;
 
+  CIRCLEQ_ENTRY(ElfuPhdr) elemChildPhdr;
   CIRCLEQ_ENTRY(ElfuPhdr) elem;
 } ElfuPhdr;
 

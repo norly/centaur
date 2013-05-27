@@ -70,7 +70,8 @@ static ElfuPhdr* modelFromPhdr(GElf_Phdr *phdr)
 
   mp->phdr = *phdr;
 
-  CIRCLEQ_INIT(&mp->phdrToScnList);
+  CIRCLEQ_INIT(&mp->childScnList);
+  CIRCLEQ_INIT(&mp->childPhdrList);
 
   return mp;
 }
@@ -195,6 +196,30 @@ ElfuElf* elfu_mFromElf(Elf *e)
     CIRCLEQ_INSERT_TAIL(&me->phdrList, mp, elem);
   }
 
+  if (numPhdr > 0) {
+    ElfuPhdr *mp;
+
+    /* Find PHDR -> PHDR dependencies (needs sorted sections) */
+    CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
+      ElfuPhdr *mp2;
+
+      if (mp->phdr.p_type != PT_LOAD) {
+        continue;
+      }
+
+      CIRCLEQ_FOREACH(mp2, &me->phdrList, elem) {
+        if (mp2 == mp) {
+          continue;
+        }
+
+        if (mp->phdr.p_vaddr <= mp2->phdr.p_vaddr
+            && OFFS_END(mp2->phdr.p_vaddr, mp2->phdr.p_memsz) <= OFFS_END(mp->phdr.p_vaddr, mp->phdr.p_memsz)) {
+          CIRCLEQ_INSERT_TAIL(&mp->childPhdrList, mp2, elemChildPhdr);
+        }
+      }
+    }
+  }
+
 
   /* Load sections */
   assert(!elf_getshdrnum(e, &numShdr));
@@ -260,7 +285,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
       ElfuPhdr *parent = parentPhdr(me, ms);
 
       if (parent) {
-        CIRCLEQ_INSERT_TAIL(&parent->phdrToScnList, ms, elemPhdrToScn);
+        CIRCLEQ_INSERT_TAIL(&parent->childScnList, ms, elemChildScn);
       }
     }
 
