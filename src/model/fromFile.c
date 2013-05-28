@@ -167,6 +167,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
   /* General stuff */
   CIRCLEQ_INIT(&me->scnList);
   CIRCLEQ_INIT(&me->phdrList);
+  CIRCLEQ_INIT(&me->orphanScnList);
   me->shstrtab = NULL;
 
   me->elfclass = gelf_getclass(e);
@@ -286,6 +287,8 @@ ElfuElf* elfu_mFromElf(Elf *e)
 
       if (parent) {
         CIRCLEQ_INSERT_TAIL(&parent->childScnList, ms, elemChildScn);
+      } else {
+        CIRCLEQ_INSERT_TAIL(&me->orphanScnList, ms, elemChildScn);
       }
     }
 

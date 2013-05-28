@@ -37,6 +37,7 @@ typedef struct {
 
   CIRCLEQ_HEAD(ScnList, ElfuScn) scnList;
   CIRCLEQ_HEAD(PhdrList, ElfuPhdr) phdrList;
+  CIRCLEQ_HEAD(OrphanScnList, ElfuScn) orphanScnList;
 
   ElfuScn *shstrtab;
 } ElfuElf;

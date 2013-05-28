@@ -209,6 +209,15 @@ void elfu_mDumpElf(ElfuElf *me)
   ELFU_INFO("\n");
 
 
+  ELFU_INFO("Orphaned sections:\n");
+  CIRCLEQ_FOREACH(ms, &me->orphanScnList, elemChildScn) {
+    ELFU_INFO("        * %-17s @ %8jx\n",
+              elfu_mScnName(me, ms),
+              ms->shdr.sh_addr);
+  }
+  ELFU_INFO("\n");
+
+
   ELFU_INFO("Sections:\n");
   ELFU_INFO("     #  Name              sh_type          sh_addr sh_offset  sh_size ES Fl Al sh_link           sh_info          \n");
   ELFU_INFO("       |                 |               |        |         |        |  |  |  |                 |                 \n");
