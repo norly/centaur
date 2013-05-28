@@ -58,6 +58,9 @@ int main(int argc, char **argv)
   if (me) {
     closeElf(&hIn);
     printf("Model successfully loaded.\n");
+
+    elfu_mDumpElf(me);
+
     elfu_mCheck(me);
     printf("Input model checked.\n");
   } else {

@@ -23,6 +23,11 @@ int elfu_mCheck(ElfuElf *me);
 ElfuScn* elfu_mCloneScn(ElfuScn *ms);
 
 
+void elfu_mDumpPhdr(ElfuElf *me, ElfuPhdr *mp);
+void elfu_mDumpScn(ElfuElf *me, ElfuScn *ms);
+void elfu_mDumpElf(ElfuElf *me);
+
+
 ElfuElf* elfu_mFromElf(Elf *e);
     void elfu_mToElf(ElfuElf *me, Elf *e);
 
