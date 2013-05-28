@@ -38,22 +38,7 @@ int main(int argc, char **argv)
   }
 
 
-  /* Now that we have a (hopefully) sane environment, execute commands.
-   * Printing will have to be reimplemented based on the memory model.
-   */
-  if (opts.printHeader) {
-    printHeader(hIn.e);
-  }
-
-  if (opts.printSegments) {
-    printSegments(hIn.e);
-  }
-
-  if (opts.printSections) {
-    printSections(hIn.e);
-  }
-
-
+  /* Now that we have a (hopefully) sane environment, execute commands. */
   me = elfu_mFromElf(hIn.e);
   if (me) {
     closeElf(&hIn);
