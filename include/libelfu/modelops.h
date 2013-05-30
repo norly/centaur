@@ -4,19 +4,19 @@
 #include <elf.h>
 #include <libelf/gelf.h>
 
-#include <libelfu/modeltypes.h>
+#include <libelfu/types.h>
 
 
+size_t elfu_mPhdrCount(ElfuElf *me);
+
+
+typedef int (SectionHandlerFunc)(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2);
+int elfu_mScnForall(ElfuElf *me, SectionHandlerFunc f, void *aux1, void *aux2);
+size_t elfu_mScnCount(ElfuElf *me);
 size_t elfu_mScnIndex(ElfuElf *me, ElfuScn *ms);
-size_t elfu_mCountScns(ElfuElf *me);
-size_t elfu_mCountPhdrs(ElfuElf *me);
-
 char* elfu_mScnName(ElfuElf *me, ElfuScn *ms);
+ElfuScn** elfu_mScnSortedByOffset(ElfuElf *me, size_t *count);
 
-ElfuScn* elfu_mScnFirstInSegment(ElfuElf *me, ElfuPhdr *mp);
-ElfuScn* elfu_mScnLastInSegment(ElfuElf *me, ElfuPhdr *mp);
-
-ElfuScn* elfu_mScnByType(ElfuElf *me, Elf32_Word type);
 
 int elfu_mCheck(ElfuElf *me);
 
@@ -30,16 +30,6 @@ void elfu_mDumpElf(ElfuElf *me);
 
 ElfuElf* elfu_mFromElf(Elf *e);
     void elfu_mToElf(ElfuElf *me, Elf *e);
-
-
-      void elfu_mExpandNobits(ElfuElf *me, GElf_Off off);
-
-GElf_Xword elfu_mInsertSpaceBefore(ElfuElf *me, GElf_Off off, GElf_Xword size);
-GElf_Xword elfu_mInsertSpaceAfter(ElfuElf *me, GElf_Off off, GElf_Xword size);
-
-void elfu_mInsertScnInChainBefore(ElfuElf *me, ElfuScn *oldscn, ElfuScn *newscn);
-void elfu_mInsertScnInChainAfter(ElfuElf *me, ElfuScn *oldscn, ElfuScn *newscn);
-
 
 void elfu_mReladd(ElfuElf *me, ElfuElf *mrel);
 

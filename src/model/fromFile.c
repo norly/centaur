@@ -132,6 +132,8 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
   ms->linkptr = NULL;
   ms->infoptr = NULL;
 
+  ms->oldptr = NULL;
+
 
   return ms;
 
@@ -165,7 +167,6 @@ ElfuElf* elfu_mFromElf(Elf *e)
 
 
   /* General stuff */
-  CIRCLEQ_INIT(&me->scnList);
   CIRCLEQ_INIT(&me->phdrList);
   CIRCLEQ_INIT(&me->orphanScnList);
   me->shstrtab = NULL;
@@ -290,12 +291,6 @@ ElfuElf* elfu_mFromElf(Elf *e)
       } else {
         CIRCLEQ_INSERT_TAIL(&me->orphanScnList, ms, elemChildScn);
       }
-    }
-
-
-    /* Put sections into list of all sections */
-    for (i = 0; i < numShdr - 1; i++) {
-      CIRCLEQ_INSERT_TAIL(&me->scnList, secArray[i], elem);
     }
   }
 

@@ -3,6 +3,10 @@
 
 #include <libelf/gelf.h>
 
+
+#define ROUNDUP(x, align) ((x) + ((align) - ((x) % (align))) % (align))
+
+
 #define OFFS_END(off, sz) ((off) + (sz))
 
 #define OVERLAPPING(off1, sz1, off2, sz2) \

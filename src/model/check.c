@@ -4,66 +4,16 @@
 #include <libelfu/libelfu.h>
 
 
-
-static int isOverlapping(size_t off1, size_t sz1, size_t off2, size_t sz2)
-{
-  size_t end1 = off1 + sz1;
-  size_t end2 = off2 + sz2;
-
-  if (off2 >= off1 && off2 < end1) {
-    return 1;
-  } else if (off1 >= off2 && off1 < end2) {
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-
-static int cmpScnOffs(const void *ms1, const void *ms2)
-{
-  assert(ms1);
-  assert(ms2);
-
-  ElfuScn *s1 = *(ElfuScn**)ms1;
-  ElfuScn *s2 = *(ElfuScn**)ms2;
-
-  assert(s1);
-  assert(s2);
-
-
-  if (s1->shdr.sh_offset < s2->shdr.sh_offset) {
-    return -1;
-  } else if (s1->shdr.sh_offset == s2->shdr.sh_offset) {
-    return 0;
-  } else /* if (s1->shdr.sh_offset > s2->shdr.sh_offset) */ {
-    return 1;
-  }
-}
-
-
 int elfu_mCheck(ElfuElf *me)
 {
-  ElfuScn *ms;
   size_t numSecs;
   ElfuScn **sortedSecs;
   size_t i;
 
-  /* Sort sections by offset in file */
-  numSecs = elfu_mCountScns(me);
-  sortedSecs = malloc(numSecs * sizeof(*sortedSecs));
+  sortedSecs = elfu_mScnSortedByOffset(me, &numSecs);
   if (!sortedSecs) {
-    ELFU_WARN("elfu_check: Failed to allocate memory.\n");
+    return -1;
   }
-
-  i = 0;
-  CIRCLEQ_FOREACH(ms, &me->scnList, elem) {
-    sortedSecs[i] = ms;
-    i++;
-  }
-  assert(i == numSecs);
-
-  qsort(sortedSecs, numSecs, sizeof(*sortedSecs), cmpScnOffs);
 
 
   /* Check for overlapping sections */
@@ -88,14 +38,15 @@ int elfu_mCheck(ElfuElf *me)
 
   /* Check for sections overlapping with PHDRs */
   for (i = 0; i < numSecs; i++) {
-    if (isOverlapping(sortedSecs[i]->shdr.sh_offset,
-                      SCNFILESIZE(&sortedSecs[i]->shdr),
-                      me->ehdr.e_phoff,
-                      me->ehdr.e_phentsize * me->ehdr.e_phnum)) {
+    if (OVERLAPPING(sortedSecs[i]->shdr.sh_offset,
+                    SCNFILESIZE(&sortedSecs[i]->shdr),
+                    me->ehdr.e_phoff,
+                    me->ehdr.e_phentsize * me->ehdr.e_phnum)) {
       ELFU_WARN("elfu_check: Found section overlapping with PHDRs: %s.\n",
                 elfu_mScnName(me, sortedSecs[i]));
     }
   }
+
 
   free(sortedSecs);
 

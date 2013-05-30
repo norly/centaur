@@ -33,18 +33,27 @@ static void modelToPhdrs(ElfuElf *me, Elf *e)
 
 
 
-static void modelToSection(ElfuScn *ms, Elf *e)
+static int modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 {
+  (void) me;
+  (void) aux2;
+  Elf *e = (Elf*)aux1;
   Elf_Scn *scnOut;
 
   scnOut = elf_newscn(e);
   if (!scnOut) {
     ELFU_WARNELF("elf_newscn");
-    return;
+    return 1;
   }
 
 
   /* SHDR */
+  if (ms->linkptr) {
+    ms->shdr.sh_link = elfu_mScnIndex(me, ms->linkptr);
+  }
+  if (ms->infoptr) {
+    ms->shdr.sh_info = elfu_mScnIndex(me, ms->infoptr);
+  }
   if (!gelf_update_shdr(scnOut, &ms->shdr)) {
     ELFU_WARNELF("gelf_update_shdr");
   }
@@ -64,6 +73,8 @@ static void modelToSection(ElfuScn *ms, Elf *e)
     dataOut->d_size = ms->data.d_size;
     dataOut->d_version = ms->data.d_version;
   }
+
+  return 0;
 }
 
 
@@ -72,10 +83,11 @@ static void modelToSection(ElfuScn *ms, Elf *e)
 
 void elfu_mToElf(ElfuElf *me, Elf *e)
 {
-  ElfuScn *ms;
-
   /* We control the ELF file's layout now. */
-  /* tired's libelf also offers ELF_F_LAYOUT_OVERLAP for overlapping sections. */
+  /* tired's libelf also offers ELF_F_LAYOUT_OVERLAP for overlapping sections,
+   * but we don't want that since we filtered it out in the reading stage
+   * already. It would be too mind-blowing to handle the dependencies between
+   * the PHDRs and sections then... */
   elf_flagelf(e, ELF_C_SET, ELF_F_LAYOUT);
 
 
@@ -84,15 +96,17 @@ void elfu_mToElf(ElfuElf *me, Elf *e)
     ELFU_WARNELF("gelf_newehdr");
   }
 
+  if (me->shstrtab) {
+    me->ehdr.e_shstrndx = elfu_mScnIndex(me, me->shstrtab);
+  }
+
   if (!gelf_update_ehdr(e, &me->ehdr)) {
     ELFU_WARNELF("gelf_update_ehdr");
   }
 
 
   /* Sections */
-  CIRCLEQ_FOREACH(ms, &me->scnList, elem) {
-    modelToSection(ms, e);
-  }
+  elfu_mScnForall(me, modelToSection, e, NULL);
 
 
   /* PHDRs */

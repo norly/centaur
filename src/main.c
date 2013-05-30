@@ -59,18 +59,6 @@ int main(int argc, char **argv)
   if (!opts.fnOutput) {
     printf("No output file specified - no further operations performed.\n");
   } else {
-    if (opts.expandNobitsOffs) {
-      elfu_mExpandNobits(me, opts.expandNobitsOffs);
-    }
-
-    if (opts.insertBeforeSz) {
-      elfu_mInsertSpaceBefore(me, opts.insertBeforeOffs, opts.insertBeforeSz);
-    }
-
-    if (opts.insertAfterSz) {
-      elfu_mInsertSpaceAfter(me, opts.insertAfterOffs, opts.insertAfterSz);
-    }
-
     if (opts.fnReladd) {
       ELFHandles hRel = { 0 };
       ElfuElf *mrel = NULL;
@@ -90,12 +78,12 @@ int main(int argc, char **argv)
           elfu_mReladd(me, mrel);
         }
       }
-
     }
 
     elfu_mCheck(me);
     printf("Output model checked.\n");
 
+    elfu_mDumpElf(me);
 
     openElf(&hOut, opts.fnOutput, ELF_C_WRITE);
     if (!hOut.e) {

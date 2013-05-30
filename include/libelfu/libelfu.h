@@ -6,7 +6,6 @@
 
 #include <libelfu/generic.h>
 #include <libelfu/elfops.h>
-#include <libelfu/modeltypes.h>
 #include <libelfu/modelops.h>
 
 #include <libelfu/debug.h>

@@ -15,8 +15,6 @@ ElfuScn* elfu_mCloneScn(ElfuScn *ms)
     return NULL;
   }
 
-
-
   newscn->shdr = ms->shdr;
   newscn->data = ms->data;
   if (ms->data.d_buf) {
@@ -30,6 +28,11 @@ ElfuScn* elfu_mCloneScn(ElfuScn *ms)
     memcpy(newbuf, ms->data.d_buf, ms->data.d_size);
     newscn->data.d_buf = newbuf;
   }
+
+  newscn->linkptr = NULL;
+  newscn->infoptr = NULL;
+
+  newscn->oldptr = ms;
 
   return newscn;
 }

@@ -184,6 +184,19 @@ void elfu_mDumpEhdr(ElfuElf *me)
 }
 
 
+
+static int subScnDump(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
+{
+  (void) aux1;
+  (void) aux2;
+
+  printf(" [%4d] ", elfu_mScnIndex(me, ms));
+  elfu_mDumpScn(me, ms);
+
+  return 0;
+}
+
+
 void elfu_mDumpElf(ElfuElf *me)
 {
   ElfuPhdr *mp;
@@ -221,11 +234,6 @@ void elfu_mDumpElf(ElfuElf *me)
   ELFU_INFO("Sections:\n");
   ELFU_INFO("     #  Name              sh_type          sh_addr sh_offset  sh_size ES Fl Al sh_link           sh_info          \n");
   ELFU_INFO("       |                 |               |        |         |        |  |  |  |                 |                 \n");
-  i = 1;
-  CIRCLEQ_FOREACH(ms, &me->scnList, elem) {
-    printf(" [%4d] ", i);
-    elfu_mDumpScn(me, ms);
-    i++;
-  }
+  elfu_mScnForall(me, subScnDump, &i, NULL);
   ELFU_INFO("\n");
 }
