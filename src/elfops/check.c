@@ -165,7 +165,10 @@ int elfu_eCheck(Elf *e)
        * Find parent PHDR: */
       for (j = 0; j < numPhdr; j++) {
         if (PHDR_CONTAINS_SCN_IN_MEMORY(&phdrs[j], &shdrs[i])) {
-          if (!PHDR_CONTAINS_SCN_IN_FILE(&phdrs[j], &shdrs[i])) {
+          GElf_Off shoff = phdrs[j].p_offset + (shdrs[i].sh_addr - phdrs[j].p_vaddr);
+
+          if (shdrs[i].sh_offset != shoff
+              || !PHDR_CONTAINS_SCN_IN_FILE(&phdrs[j], &shdrs[i])) {
             ELFU_WARN("elfu_eCheck: Memory/file offsets/sizes are not congruent for SHDR %d, PHDR %d.\n", i, j);
             goto ERROR;
           }

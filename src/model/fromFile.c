@@ -42,14 +42,21 @@ static ElfuPhdr* parentPhdr(ElfuElf *me, ElfuScn *ms)
       continue;
     }
 
-    if (ms->shdr.sh_addr >= mp->phdr.p_vaddr
-        && OFFS_END(ms->shdr.sh_addr, ms->shdr.sh_size) <= OFFS_END(mp->phdr.p_vaddr, mp->phdr.p_memsz)) {
-      return mp;
-    } else if (ms->shdr.sh_offset >= mp->phdr.p_offset
-               && OFFS_END(ms->shdr.sh_offset, SCNFILESIZE(&ms->shdr)) <= OFFS_END(mp->phdr.p_offset, mp->phdr.p_filesz)
-               && OFFS_END(ms->shdr.sh_offset, ms->shdr.sh_size) <= OFFS_END(mp->phdr.p_offset, mp->phdr.p_memsz)) {
+    if (PHDR_CONTAINS_SCN_IN_MEMORY(&mp->phdr, &ms->shdr)) {
       return mp;
     }
+
+    /* Give sections a second chance if they do not have any sh_addr
+     * at all. */
+    /* Actually we don't, because it's ambiguous.
+     * Re-enable for experiments with strangely-formatted files.
+    if (ms->shdr.sh_addr == 0
+        && PHDR_CONTAINS_SCN_IN_FILE(&mp->phdr, &ms->shdr)
+        && OFFS_END(ms->shdr.sh_offset, ms->shdr.sh_size)
+            <= OFFS_END(mp->phdr.p_offset, mp->phdr.p_memsz)) {
+      return mp;
+    }
+    */
   }
 
   return NULL;
@@ -287,6 +294,15 @@ ElfuElf* elfu_mFromElf(Elf *e)
       ElfuPhdr *parent = parentPhdr(me, ms);
 
       if (parent) {
+        GElf_Off shaddr = parent->phdr.p_vaddr +
+                         (ms->shdr.sh_offset - parent->phdr.p_offset);
+
+        if (ms->shdr.sh_addr == 0) {
+          ms->shdr.sh_addr = shaddr;
+        } else {
+          assert(ms->shdr.sh_addr == shaddr);
+        }
+
         CIRCLEQ_INSERT_TAIL(&parent->childScnList, ms, elemChildScn);
       } else {
         CIRCLEQ_INSERT_TAIL(&me->orphanScnList, ms, elemChildScn);
