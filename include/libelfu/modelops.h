@@ -22,6 +22,7 @@ ElfuScn** elfu_mScnSortedByOffset(ElfuElf *me, size_t *count);
 GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
                                      GElf_Word align, int w, int x,
                                      ElfuPhdr **injPhdr);
+int elfu_mLayoutAuto(ElfuElf *me);
 
 
 int elfu_mCheck(ElfuElf *me);

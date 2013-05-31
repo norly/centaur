@@ -215,3 +215,100 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
   }
   return 0;
 }
+
+
+
+
+static int cmpPhdrOffs(const void *mp1, const void *mp2)
+{
+  assert(mp1);
+  assert(mp2);
+
+  ElfuPhdr *p1 = *(ElfuPhdr**)mp1;
+  ElfuPhdr *p2 = *(ElfuPhdr**)mp2;
+
+  assert(p1);
+  assert(p2);
+
+
+  if (p1->phdr.p_offset < p2->phdr.p_offset) {
+    return -1;
+  } else if (p1->phdr.p_offset == p2->phdr.p_offset) {
+    return 0;
+  } else /* if (p1->phdr.p_offset > p2->phdr.p_offset) */ {
+    return 1;
+  }
+}
+
+int elfu_mLayoutAuto(ElfuElf *me)
+{
+  ElfuPhdr *mp;
+  ElfuScn *ms;
+  ElfuPhdr **phdrArr;
+  GElf_Off lastend = 0;
+  size_t i, j;
+
+  assert(me);
+
+  phdrArr = malloc(elfu_mPhdrCount(me) * sizeof(*phdrArr));
+  if (!phdrArr) {
+    ELFU_WARN("elfu_mLayoutAuto: malloc failed for phdrArr.\n");
+    return 1;
+  }
+
+  i = 0;
+  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
+    if (mp->phdr.p_type != PT_LOAD) {
+      continue;
+    }
+
+    phdrArr[i] = mp;
+    i++;
+  }
+
+  /* Assume we have at least one LOAD PHDR,
+   * and that it ends after EHDR and PHDRs */
+  assert(i > 1);
+
+  /* Sort array by file offset */
+  qsort(phdrArr, i, sizeof(*phdrArr), cmpPhdrOffs);
+
+  lastend = OFFS_END(phdrArr[0]->phdr.p_offset, phdrArr[0]->phdr.p_filesz);
+
+  /* Wiggle offsets of 2nd, 3rd etc so take minimum space */
+  for (j = 1; j < i; j++) {
+    GElf_Off subalign = phdrArr[j]->phdr.p_offset % phdrArr[j]->phdr.p_align;
+
+    if ((lastend % phdrArr[j]->phdr.p_align) <= subalign) {
+      lastend += subalign - (lastend % phdrArr[j]->phdr.p_align);
+    } else {
+      lastend += phdrArr[j]->phdr.p_align - ((lastend % phdrArr[j]->phdr.p_align) - subalign);
+    }
+
+    phdrArr[j]->phdr.p_offset = lastend;
+
+    elfu_mPhdrUpdateChildOffsets(phdrArr[j]);
+
+    lastend = OFFS_END(phdrArr[j]->phdr.p_offset, phdrArr[j]->phdr.p_filesz);
+  }
+
+  free(phdrArr);
+
+
+  /* Place orphaned sections afterwards, maintaining alignment */
+  CIRCLEQ_FOREACH(ms, &me->orphanScnList, elemChildScn) {
+    lastend = ROUNDUP(lastend, ms->shdr.sh_addralign);
+
+    ms->shdr.sh_offset = lastend;
+
+    lastend = OFFS_END(ms->shdr.sh_offset, SCNFILESIZE(&ms->shdr));
+  }
+
+
+  /* Move SHDRs to end */
+  lastend = ROUNDUP(lastend, 8);
+  me->ehdr.e_shoff = lastend;
+
+
+  return 0;
+}

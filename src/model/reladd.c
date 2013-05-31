@@ -160,4 +160,7 @@ void elfu_mReladd(ElfuElf *me, ElfuElf *mrel)
 
   /* Do relocations and other stuff */
   elfu_mScnForall(mrel, subScnAdd2, me, NULL);
+
+  /* Re-layout to accommodate new contents */
+  elfu_mLayoutAuto(me);
 }
