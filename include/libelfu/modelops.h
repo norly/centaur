@@ -8,6 +8,7 @@
 
 
 size_t elfu_mPhdrCount(ElfuElf *me);
+void elfu_mPhdrUpdateChildOffsets(ElfuPhdr *mp);
 
 
 typedef int (SectionHandlerFunc)(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2);
@@ -16,6 +17,11 @@ size_t elfu_mScnCount(ElfuElf *me);
 size_t elfu_mScnIndex(ElfuElf *me, ElfuScn *ms);
 char* elfu_mScnName(ElfuElf *me, ElfuScn *ms);
 ElfuScn** elfu_mScnSortedByOffset(ElfuElf *me, size_t *count);
+
+
+GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
+                                     GElf_Word align, int w, int x,
+                                     ElfuPhdr **injPhdr);
 
 
 int elfu_mCheck(ElfuElf *me);
