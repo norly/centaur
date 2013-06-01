@@ -185,7 +185,7 @@ void elfu_mDumpEhdr(ElfuElf *me)
 
 
 
-static int subScnDump(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
+static void* subScnDump(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 {
   (void) aux1;
   (void) aux2;
@@ -193,7 +193,7 @@ static int subScnDump(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
   printf(" [%4d] ", elfu_mScnIndex(me, ms));
   elfu_mDumpScn(me, ms);
 
-  return 0;
+  return NULL;
 }
 
 

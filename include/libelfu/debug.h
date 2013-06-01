@@ -4,6 +4,8 @@
 #include <stdio.h>
 
 
+#define ELFU_DEBUG(...) do { fprintf(stdout, __VA_ARGS__); } while(0)
+
 #define ELFU_INFO(...) do { fprintf(stdout, __VA_ARGS__); } while(0)
 
 #define ELFU_WARN(...) do { fprintf(stderr, __VA_ARGS__); } while(0)

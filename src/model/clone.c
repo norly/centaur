@@ -34,5 +34,8 @@ ElfuScn* elfu_mCloneScn(ElfuScn *ms)
 
   newscn->oldptr = ms;
 
+  ms->symtab = NULL;
+  ms->reltab = NULL;
+
   return newscn;
 }

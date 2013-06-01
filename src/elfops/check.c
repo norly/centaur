@@ -24,6 +24,11 @@ int elfu_eCheck(Elf *e)
     goto ERROR;
   }
 
+  if (ehdr.e_machine != EM_386) {
+    ELFU_WARN("Sorry, only x86-32 ELF files are supported at the moment.\n");
+    goto ERROR;
+  }
+
   if (elf_getphdrnum(e, &numPhdr)) {
     ELFU_WARNELF("elf_getphdrnum");
     goto ERROR;

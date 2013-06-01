@@ -17,6 +17,9 @@ typedef struct ElfuScn {
 
   struct ElfuScn *oldptr;
 
+  struct ElfuSymtab *symtab;
+  struct ElfuReltab *reltab;
+
   CIRCLEQ_ENTRY(ElfuScn) elemChildScn;
   CIRCLEQ_ENTRY(ElfuScn) elem;
 } ElfuScn;
@@ -42,6 +45,52 @@ typedef struct {
 
   ElfuScn *shstrtab;
 } ElfuElf;
+
+
+
+
+
+typedef struct ElfuSym {
+  char *name;
+
+  GElf_Addr value;
+  GElf_Word size;
+
+  unsigned char bind;
+  unsigned char type;
+  unsigned char other;
+
+  ElfuScn *scnptr;
+
+  CIRCLEQ_ENTRY(ElfuSym) elem;
+} ElfuSym;
+
+
+typedef struct ElfuSymtab {
+  CIRCLEQ_HEAD(Syms, ElfuSym) syms;
+} ElfuSymtab;
+
+
+
+typedef struct ElfuRel {
+  char *name;
+
+  GElf_Addr offset;
+  GElf_Word info;
+
+  GElf_Word sym;
+  unsigned char type;
+
+  int addendUsed;
+  GElf_Sword addend;
+
+  CIRCLEQ_ENTRY(ElfuRel) elem;
+} ElfuRel;
+
+
+typedef struct ElfuReltab {
+  CIRCLEQ_HEAD(Rels, ElfuRel) rels;
+} ElfuReltab;
 
 
 #endif

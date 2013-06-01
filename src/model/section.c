@@ -5,7 +5,7 @@
 
 /* Meta-functions */
 
-int elfu_mScnForall(ElfuElf *me, SectionHandlerFunc f, void *aux1, void *aux2)
+void* elfu_mScnForall(ElfuElf *me, SectionHandlerFunc f, void *aux1, void *aux2)
 {
   ElfuPhdr *mp;
   ElfuScn *ms;
@@ -18,7 +18,7 @@ int elfu_mScnForall(ElfuElf *me, SectionHandlerFunc f, void *aux1, void *aux2)
     }
 
     CIRCLEQ_FOREACH(ms, &mp->childScnList, elemChildScn) {
-      int rv = f(me, ms, aux1, aux2);
+      void *rv = f(me, ms, aux1, aux2);
 
       if (rv) {
         return rv;
@@ -27,14 +27,14 @@ int elfu_mScnForall(ElfuElf *me, SectionHandlerFunc f, void *aux1, void *aux2)
   }
 
   CIRCLEQ_FOREACH(ms, &me->orphanScnList, elemChildScn) {
-    int rv = f(me, ms, aux1, aux2);
+    void *rv = f(me, ms, aux1, aux2);
 
     if (rv) {
       return rv;
     }
   }
 
-  return 0;
+  return NULL;
 }
 
 
@@ -42,18 +42,19 @@ int elfu_mScnForall(ElfuElf *me, SectionHandlerFunc f, void *aux1, void *aux2)
 
 /* Counting */
 
-static int subCounter(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
+static void* subCounter(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 {
   size_t *i = (size_t*)aux1;
   ElfuScn *otherScn = (ElfuScn*)aux2;
 
   if (ms == otherScn) {
-    return 1;
+    return ms;
   }
 
   *i += 1;
 
-  return 0;
+  /* Continue */
+  return NULL;
 }
 
 
@@ -70,7 +71,7 @@ size_t elfu_mScnCount(ElfuElf *me)
 }
 
 
-/* Returns the section index equivalent to the model flattened to ELF */
+/* Returns the index a section would have in the flattened ELF */
 size_t elfu_mScnIndex(ElfuElf *me, ElfuScn *ms)
 {
   /* NULL section *is* counted */
@@ -84,6 +85,29 @@ size_t elfu_mScnIndex(ElfuElf *me, ElfuScn *ms)
   /* If this assertion is broken then ms is not a section in me. */
   assert(i <= elfu_mScnCount(me));
   return i;
+}
+
+
+static void* subOldscn(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
+{
+  ElfuScn *otherScn = (ElfuScn*)aux1;
+  (void)aux2;
+
+  if (ms->oldptr == otherScn) {
+    return ms;
+  }
+
+  /* Continue */
+  return NULL;
+}
+
+/* Returns the section with oldscn == oldscn */
+ElfuScn* elfu_mScnByOldscn(ElfuElf *me, ElfuScn *oldscn)
+{
+  assert(me);
+  assert(oldscn);
+
+  return elfu_mScnForall(me, subOldscn, oldscn, NULL);
 }
 
 
@@ -108,7 +132,7 @@ char* elfu_mScnName(ElfuElf *me, ElfuScn *ms)
 }
 
 
-static int subScnsToArray(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
+static void* subScnsToArray(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 {
   ElfuScn **arr = (ElfuScn**)aux1;
   size_t *i = (size_t*)aux2;
@@ -116,7 +140,8 @@ static int subScnsToArray(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
   arr[(*i)] = ms;
   *i += 1;
 
-  return 0;
+  /* Continue */
+  return NULL;
 }
 
 static int cmpScnOffs(const void *ms1, const void *ms2)

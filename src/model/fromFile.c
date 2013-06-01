@@ -5,6 +5,120 @@
 #include <libelfu/libelfu.h>
 
 
+static char* symstr(ElfuScn *symtab, size_t off)
+{
+  assert(symtab);
+  assert(symtab->linkptr);
+  assert(symtab->linkptr->data.d_buf);
+  assert(off < symtab->linkptr->data.d_size);
+
+  return &(((char*)symtab->linkptr->data.d_buf)[off]);
+}
+
+
+static ElfuSymtab* symtabFromScn32(ElfuScn *ms, ElfuScn**origScnArr)
+{
+  ElfuSymtab *st;
+  size_t i;
+
+  assert(ms);
+  assert(ms->data.d_buf);
+  assert(origScnArr);
+
+
+  st = malloc(sizeof(*st));
+  if (!st) {
+    ELFU_WARN("elfu_mSymtabFromScn32: malloc() failed for st.\n");
+    goto ERROR;
+  }
+
+  CIRCLEQ_INIT(&st->syms);
+
+
+  for (i = 1; (i + 1) * sizeof(Elf32_Sym) <= ms->shdr.sh_size; i++) {
+    Elf32_Sym *cursym = &(((Elf32_Sym*)ms->data.d_buf)[i]);
+    ElfuSym *sym = malloc(sizeof(*sym));
+    assert(sym);
+
+    sym->name = symstr(ms, cursym->st_name);
+    sym->value = cursym->st_value;
+    sym->size = cursym->st_size;
+    sym->bind = ELF32_ST_BIND(cursym->st_info);
+    sym->type = ELF32_ST_TYPE(cursym->st_info);
+    sym->other = cursym->st_other;
+
+    switch (cursym->st_shndx) {
+      case SHN_UNDEF:
+      case SHN_ABS:
+      case SHN_COMMON:
+        sym->scnptr = NULL;
+        break;
+      default:
+        sym->scnptr = origScnArr[cursym->st_shndx - 1];
+        break;
+    }
+
+    CIRCLEQ_INSERT_TAIL(&st->syms, sym, elem);
+  }
+
+
+  return st;
+
+  ERROR:
+  if (st) {
+    free(st);
+  }
+  return NULL;
+}
+
+
+static ElfuReltab* reltabFromScn32(ElfuScn *ms)
+{
+  ElfuReltab *rt;
+  size_t i;
+
+  assert(ms);
+  assert(ms->data.d_buf);
+
+
+  rt = malloc(sizeof(*rt));
+  if (!rt) {
+    ELFU_WARN("elfu_mReltabFromScn32: malloc() failed for rt.\n");
+    goto ERROR;
+  }
+
+  CIRCLEQ_INIT(&rt->rels);
+
+
+  for (i = 0; (i + 1) * sizeof(Elf32_Rel) <= ms->shdr.sh_size; i++) {
+    Elf32_Rel *currel = &(((Elf32_Rel*)ms->data.d_buf)[i]);
+    ElfuRel *rel;
+
+    rel = malloc(sizeof(*rel));
+    assert(rel);
+
+    rel->offset = currel->r_offset;
+
+    rel->sym = ELF32_R_SYM(currel->r_info);
+    rel->type = ELF32_R_TYPE(currel->r_info);
+
+    rel->addendUsed = 0;
+    rel->addend = 0;
+
+    CIRCLEQ_INSERT_TAIL(&rt->rels, rel, elem);
+  }
+
+
+  return rt;
+
+  ERROR:
+  if (rt) {
+    free(rt);
+  }
+  return NULL;
+}
+
+
 static int cmpScnOffs(const void *ms1, const void *ms2)
 {
   assert(ms1);
@@ -139,6 +253,9 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 
   ms->oldptr = NULL;
 
+  ms->symtab = NULL;
+  ms->reltab = NULL;
+
 
   return ms;
 
@@ -257,7 +374,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
     }
 
 
-    /* Find sh_link dependencies */
+    /* Find sh_link and sh_info dependencies (needs sections in original order) */
     for (i = 0; i < numShdr - 1; i++) {
       ElfuScn *ms = secArray[i];
 
@@ -277,6 +394,48 @@ ElfuElf* elfu_mFromElf(Elf *e)
           if (ms->shdr.sh_link > 0) {
             ms->linkptr = secArray[ms->shdr.sh_link - 1];
           }
+      }
+    }
+
+
+    /* Parse symtabs (needs sections in original order) */
+    for (i = 0; i < numShdr - 1; i++) {
+      ElfuScn *ms = secArray[i];
+
+      switch (ms->shdr.sh_type) {
+        case SHT_SYMTAB:
+          if (me->elfclass == ELFCLASS32) {
+            ms->symtab = symtabFromScn32(ms, secArray);
+          } else if (me->elfclass == ELFCLASS64) {
+            // TODO
+          }
+          assert(ms->symtab);
+          break;
+      }
+    }
+
+
+    /* Parse relocations */
+    for (i = 0; i < numShdr - 1; i++) {
+      ElfuScn *ms = secArray[i];
+
+      switch (ms->shdr.sh_type) {
+        case SHT_REL:
+          if (me->elfclass == ELFCLASS32) {
+            ms->reltab = reltabFromScn32(ms);
+          } else if (me->elfclass == ELFCLASS64) {
+            // TODO
+          }
+          assert(ms->reltab);
+          break;
+        case SHT_RELA:
+          if (me->elfclass == ELFCLASS32) {
+            // TODO
+          } else if (me->elfclass == ELFCLASS64) {
+            // TODO
+          }
+          assert(ms->reltab);
+          break;
       }
     }
 

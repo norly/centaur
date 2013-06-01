@@ -31,7 +31,7 @@ static void modelToPhdrs(ElfuElf *me, Elf *e)
 
 
 
-static int modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
+static void* modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 {
   (void) me;
   (void) aux2;
@@ -41,7 +41,7 @@ static int modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
   scnOut = elf_newscn(e);
   if (!scnOut) {
     ELFU_WARNELF("elf_newscn");
-    return 1;
+    return (void*)-1;
   }
 
 
@@ -72,7 +72,7 @@ static int modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
     dataOut->d_version = ms->data.d_version;
   }
 
-  return 0;
+  return NULL;
 }
 
 

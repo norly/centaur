@@ -126,7 +126,7 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
 }
 
 
-int subScnAdd1(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
+static void* subScnAdd1(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
 {
   (void)aux2;
   ElfuElf *me = (ElfuElf*)aux1;
@@ -143,13 +143,19 @@ int subScnAdd1(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
                   ms->shdr.sh_type);
       }
       break;
+    case SHT_NOBITS: /* 8 */
+      /* Expand this to SHT_PROGBITS, then insert as such. */
+
+      // TODO
+
+      break;
   }
 
-  return 0;
+  return NULL;
 }
 
 
-int subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
+static void* subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
 {
   (void)aux2;
   ElfuElf *me = (ElfuElf*)aux1;
@@ -160,34 +166,35 @@ int subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
     case SHT_PROGBITS: /* 1 */
       break;
 
+
+    case SHT_REL: /* 9 */
+      /* Relocate. */
+      elfu_mRelocate32(me, elfu_mScnByOldscn(me, ms->infoptr), ms);
+      break;
+
+    case SHT_RELA: /* 4 */
+      // TODO: Needs a parser
+      //elfu_mRelocate(elfu_mScnByOldscn(me, ms->infoptr), ms);
+
     case SHT_SYMTAB: /* 2 */
-    case SHT_DYNSYM: /* 11 */
       /* Merge with the existing table. Take care of string tables also. */
 
     case SHT_STRTAB: /* 3 */
       /* May have to be merged with the existing string table for
        * the symbol table. */
 
-    case SHT_RELA: /* 4 */
-    case SHT_REL: /* 9 */
-      /* Possibly append this in memory to the section model
-       * that it describes. */
-
-    case SHT_NOBITS: /* 8 */
-      /* Expand this to SHT_PROGBITS, then insert as such. */
-
+    /* The next section types either do not occur in .o files, or are
+     * not strictly necessary to process here. */
+    case SHT_NOTE: /* 7 */
     case SHT_HASH: /* 5 */
     case SHT_DYNAMIC: /* 6 */
     case SHT_SHLIB: /* 10 */
-    case SHT_SYMTAB_SHNDX: /* 18 */
-
-    /* Don't care about the next ones yet. I've never seen
-     * them and they can be implemented when necessary. */
-    case SHT_NOTE: /* 7 */
+    case SHT_DYNSYM: /* 11 */
     case SHT_INIT_ARRAY: /* 14 */
     case SHT_FINI_ARRAY: /* 15 */
     case SHT_PREINIT_ARRAY: /* 16 */
     case SHT_GROUP: /* 17 */
+    case SHT_SYMTAB_SHNDX: /* 18 */
     case SHT_NUM: /* 19 */
     default:
       ELFU_WARN("mReladd: Skipping section %s (type %d).\n",
@@ -195,7 +202,7 @@ int subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
                 ms->shdr.sh_type);
   }
 
-  return 0;
+  return NULL;
 }
 
 
