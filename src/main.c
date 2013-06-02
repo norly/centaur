@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     closeElf(&hIn);
     printf("Model successfully loaded.\n");
 
-    elfu_mDumpElf(me);
+    //elfu_mDumpElf(me);
 
     elfu_mCheck(me);
     printf("Input model checked.\n");
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     elfu_mCheck(me);
     printf("Output model checked.\n");
 
-    elfu_mDumpElf(me);
+    //elfu_mDumpElf(me);
 
     openElf(&hOut, opts.fnOutput, ELF_C_WRITE);
     if (!hOut.e) {
