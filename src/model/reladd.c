@@ -111,10 +111,10 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
 
     return newscn;
   } else {
-      ELFU_WARN("insertSection: Skipping section %s with flags %jd (type %d).\n",
+      ELFU_WARN("insertSection: Skipping non-memory section %s (type %d flags %jd).\n",
                 elfu_mScnName(mrel, oldscn),
-                oldscn->shdr.sh_flags,
-                oldscn->shdr.sh_type);
+                oldscn->shdr.sh_type,
+                oldscn->shdr.sh_flags);
       goto ERROR;
   }
 

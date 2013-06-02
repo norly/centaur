@@ -61,6 +61,7 @@ typedef struct ElfuSym {
   unsigned char other;
 
   ElfuScn *scnptr;
+  int shndx;
 
   CIRCLEQ_ENTRY(ElfuSym) elem;
 } ElfuSym;

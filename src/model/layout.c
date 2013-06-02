@@ -82,6 +82,12 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
 
   assert(!(w && x));
 
+  /* Treat read-only data as executable.
+   * That's what the GNU toolchain does on x86. */
+  if (!w && !x) {
+    x = 1;
+  }
+
   /* Find first and last LOAD PHDRs.
    * Don't compare p_memsz - segments don't overlap in memory. */
   CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {

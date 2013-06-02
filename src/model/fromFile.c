@@ -52,11 +52,13 @@ static ElfuSymtab* symtabFromScn32(ElfuScn *ms, ElfuScn**origScnArr)
       case SHN_ABS:
       case SHN_COMMON:
         sym->scnptr = NULL;
+        sym->shndx = cursym->st_shndx;
         break;
       default:
         sym->scnptr = origScnArr[cursym->st_shndx - 1];
         break;
     }
+
 
     CIRCLEQ_INSERT_TAIL(&st->syms, sym, elem);
   }
@@ -404,6 +406,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
 
       switch (ms->shdr.sh_type) {
         case SHT_SYMTAB:
+        case SHT_DYNSYM:
           if (me->elfclass == ELFCLASS32) {
             ms->symtab = symtabFromScn32(ms, secArray);
           } else if (me->elfclass == ELFCLASS64) {
