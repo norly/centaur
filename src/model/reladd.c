@@ -42,6 +42,18 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
       return NULL;
     }
 
+    if (newscn->shdr.sh_type == SHT_NOBITS) {
+      /* Expand this to SHT_PROGBITS, then insert as such. */
+
+      assert(!newscn->data.d_buf);
+
+      newscn->data.d_buf = malloc(newscn->shdr.sh_size);
+      if (!newscn->data.d_buf) {
+        goto ERROR;
+      }
+      newscn->data.d_size = newscn->shdr.sh_size;
+      newscn->shdr.sh_type = SHT_PROGBITS;
+    }
 
     injAddr = elfu_mLayoutGetSpaceInPhdr(me,
                                          newscn->shdr.sh_size,
@@ -106,9 +118,6 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
       }
     }
 
-
-    // TODO: Relocate
-
     return newscn;
   } else {
       ELFU_WARN("insertSection: Skipping non-memory section %s (type %d flags %jd).\n",
@@ -135,6 +144,12 @@ static void* subScnAdd1(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
 
   switch(ms->shdr.sh_type) {
     case SHT_PROGBITS: /* 1 */
+    case SHT_NOBITS: /* 8 */
+      /* Ignore empty sections */
+      if (ms->shdr.sh_size == 0) {
+        break;
+      }
+
       /* Find a place where it belongs and shove it in. */
       newscn = insertSection(me, mrel, ms);
       if (!newscn) {
@@ -142,12 +157,6 @@ static void* subScnAdd1(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
                   elfu_mScnName(mrel, ms),
                   ms->shdr.sh_type);
       }
-      break;
-    case SHT_NOBITS: /* 8 */
-      /* Expand this to SHT_PROGBITS, then insert as such. */
-
-      // TODO
-
       break;
   }
 
@@ -164,6 +173,7 @@ static void* subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
   switch(ms->shdr.sh_type) {
     case SHT_NULL: /* 0 */
     case SHT_PROGBITS: /* 1 */
+    case SHT_NOBITS: /* 8 */
       break;
 
 
