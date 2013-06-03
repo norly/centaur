@@ -173,6 +173,7 @@ static void* subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
   switch(ms->shdr.sh_type) {
     case SHT_NULL: /* 0 */
     case SHT_PROGBITS: /* 1 */
+    case SHT_STRTAB: /* 3 */
     case SHT_NOBITS: /* 8 */
       break;
 
@@ -188,10 +189,6 @@ static void* subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
 
     case SHT_SYMTAB: /* 2 */
       /* Merge with the existing table. Take care of string tables also. */
-
-    case SHT_STRTAB: /* 3 */
-      /* May have to be merged with the existing string table for
-       * the symbol table. */
 
     /* The next section types either do not occur in .o files, or are
      * not strictly necessary to process here. */
