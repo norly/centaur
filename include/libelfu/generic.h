@@ -1,7 +1,7 @@
 #ifndef __LIBELFU_GENERIC_H__
 #define __LIBELFU_GENERIC_H__
 
-#include <libelf/gelf.h>
+#include <gelf.h>
 
 
 #define ROUNDUP(x, align) ((x) + ((align) - ((x) % (align))) % (align))

@@ -4,7 +4,7 @@
 #include <sys/queue.h>
 
 #include <elf.h>
-#include <libelf/gelf.h>
+#include <gelf.h>
 
 
 typedef struct ElfuScn {

@@ -1,6 +1,4 @@
 #include <stdlib.h>
-#include <libelf/libelf.h>
-#include <libelf/gelf.h>
 #include <libelfu/libelfu.h>
 
 

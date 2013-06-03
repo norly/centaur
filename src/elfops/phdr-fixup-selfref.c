@@ -1,7 +1,4 @@
-#include <libelf/libelf.h>
-#include <libelf/gelf.h>
-
-#include <libelfu/debug.h>
+#include <libelfu/libelfu.h>
 
 
 void elfu_ePhdrFixupSelfRef(Elf *e)

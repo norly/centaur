@@ -5,8 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <libelf/libelf.h>
+#include <libelf.h>
 
 #include "elfhandle.h"
 

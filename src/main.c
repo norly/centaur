@@ -1,10 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <getopt.h>
-#include <libelf/libelf.h>
-#include <libelf/gelf.h>
-
 #include <libelfu/libelfu.h>
 
 #include "elfhandle.h"
