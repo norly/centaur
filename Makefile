@@ -1,4 +1,4 @@
-PROJ := elfedit
+PROJ := centaur
 
 LIBRARIES := libelf
 
