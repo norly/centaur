@@ -5,17 +5,6 @@
 #include <libelfu/libelfu.h>
 
 
-static char* symstr(ElfuScn *symtab, size_t off)
-{
-  assert(symtab);
-  assert(symtab->linkptr);
-  assert(symtab->linkptr->data.d_buf);
-  assert(off < symtab->linkptr->data.d_size);
-
-  return &(((char*)symtab->linkptr->data.d_buf)[off]);
-}
-
-
 static void parseSymtab32(ElfuScn *ms, ElfuScn**origScnArr)
 {
   size_t i;
@@ -31,19 +20,18 @@ static void parseSymtab32(ElfuScn *ms, ElfuScn**origScnArr)
     assert(sym);
 
     sym->name = cursym->st_name;
-    sym->nameptr = symstr(ms, cursym->st_name);
     sym->value = cursym->st_value;
     sym->size = cursym->st_size;
     sym->bind = ELF32_ST_BIND(cursym->st_info);
     sym->type = ELF32_ST_TYPE(cursym->st_info);
     sym->other = cursym->st_other;
+    sym->shndx = cursym->st_shndx;
 
     switch (cursym->st_shndx) {
       case SHN_UNDEF:
       case SHN_ABS:
       case SHN_COMMON:
         sym->scnptr = NULL;
-        sym->shndx = cursym->st_shndx;
         break;
       default:
         sym->scnptr = origScnArr[cursym->st_shndx - 1];

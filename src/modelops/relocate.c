@@ -40,29 +40,36 @@ static GElf_Word pltLookupVal(ElfuElf *metarget, char *name)
   }
 
 
-  /* Look up name */
+  /* Look up name. If the j-th entry in .rel.plt has the name we are
+   * looking for, we assume that the (j+1)-th entry in .plt is machine
+   * code to jump to the function.
+   * Your mileage may vary, but it works on my GNU binaries. */
   assert(relplt->linkptr);
   j = 0;
   CIRCLEQ_FOREACH(rel, &relplt->reltab.rels, elem) {
     GElf_Word i;
     ElfuSym *sym;
+    char *symname;
 
     j++;
 
+    /* We only consider runtime relocations for functions.
+     * Technically, these relocations write the functions' addresses
+     * to the GOT, not the PLT, after the dynamic linker has found
+     * them. */
     if (rel->type != R_386_JMP_SLOT) {
       continue;
     }
 
+    /* Get the (rel->sym)-th symbol from the symbol table that
+     * .rel.plt points to. */
     sym = CIRCLEQ_FIRST(&relplt->linkptr->symtab.syms);
     for (i = 1; i < rel->sym; i++) {
       sym = CIRCLEQ_NEXT(sym, elem);
     }
 
-    if (!sym->nameptr) {
-      continue;
-    }
-
-    if (!strcmp(sym->nameptr, name)) {
+    symname = ELFU_SYMSTR(relplt->linkptr, sym->name);
+    if (!strcmp(symname, name)) {
       /* If this is the symbol we are looking for, then in an x86 binary
        * the jump to the dynamic symbol is probably at offset (j * 16)
        * from the start of the PLT, where j is the PLT entry and 16 is
@@ -83,6 +90,7 @@ static GElf_Word symtabLookupVal(ElfuElf *metarget, ElfuScn *msst, GElf_Word ent
 {
   GElf_Word i;
   ElfuSym *sym;
+  char *symname;
 
   assert(metarget);
   assert(msst);
@@ -93,19 +101,21 @@ static GElf_Word symtabLookupVal(ElfuElf *metarget, ElfuScn *msst, GElf_Word ent
   for (i = 1; i < entry; i++) {
     sym = CIRCLEQ_NEXT(sym, elem);
   }
+  symname = ELFU_SYMSTR(msst, sym->name);
 
   switch (sym->type) {
     case STT_NOTYPE:
     case STT_OBJECT:
     case STT_FUNC:
       if (sym->scnptr) {
-        assert(elfu_mScnByOldscn(metarget, sym->scnptr));
-        return elfu_mScnByOldscn(metarget, sym->scnptr)->shdr.sh_addr + sym->value;
+        ElfuScn *newscn = elfu_mScnByOldscn(metarget, sym->scnptr);
+        assert(newscn);
+        return newscn->shdr.sh_addr + sym->value;
       } else if (sym->shndx == SHN_UNDEF) {
-        /* Look the symbol up in .dyn.plt. If it cannot be found there then
+        /* Look the symbol up in .rel.plt. If it cannot be found there then
          * .rel.dyn may need to be expanded with a COPY relocation so the
          * dynamic linker fixes up the (TODO). */
-        return pltLookupVal(metarget, sym->nameptr);
+        return pltLookupVal(metarget, symname);
       } else if (sym->shndx == SHN_ABS) {
         return sym->value;
       } else {
@@ -121,7 +131,7 @@ static GElf_Word symtabLookupVal(ElfuElf *metarget, ElfuScn *msst, GElf_Word ent
       ELFU_WARN("symtabLookupVal: Symbol type FILE is not supported, using 0.\n");
       return 0;
     default:
-      ELFU_WARN("symtabLookupVal: Unknown symbol type %d for %s.\n", sym->type, sym->nameptr);
+      ELFU_WARN("symtabLookupVal: Unknown symbol type %d for %s.\n", sym->type, symname);
       return 0;
   }
 }

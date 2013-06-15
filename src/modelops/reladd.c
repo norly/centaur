@@ -213,16 +213,111 @@ static void* subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
 }
 
 
-void elfu_mReladd(ElfuElf *me, ElfuElf *mrel)
+
+static void insertSymClone(ElfuElf *me, const ElfuScn *oldmsst, const ElfuSym *oldsym)
+{
+  GElf_Xword newsize;
+  void *newbuf;
+  ElfuScn *newscn = NULL;
+  ElfuSym *newsym;
+  char *oldsymname;
+
+  assert(me);
+  assert(oldmsst);
+  assert(oldsym);
+
+  /* If the old symbol pointed to a section, find its clone in the target */
+  if (oldsym->scnptr) {
+    newscn = elfu_mScnByOldscn(me, oldsym->scnptr);
+
+    /* If we didn't copy the section referenced, we won't
+     * copy this symbol either */
+    if (!newscn) {
+      return;
+    }
+  }
+
+  // TODO: Allocate symtab if none present
+  assert(me->symtab);
+
+  /* Allocate memory for the cloned symbol */
+  newsym = malloc(sizeof(*newsym));
+  if (!newsym) {
+    ELFU_WARN("insertSymClone: malloc() failed for newsym.\n");
+    goto ERROR;
+  }
+
+  oldsymname = ELFU_SYMSTR(oldmsst, oldsym->name);
+
+  /* Expand .strtab, append symbol name, link newsym to it */
+  newsize = me->symtab->linkptr->shdr.sh_size + strlen(oldsymname) + 1;
+  newbuf = realloc(me->symtab->linkptr->data.d_buf, newsize);
+  if (!newbuf) {
+    ELFU_WARN("insertSymClone: realloc() failed for strtab.\n");
+    goto ERROR;
+  }
+
+  me->symtab->linkptr->data.d_buf = newbuf;
+
+  newsym->name = me->symtab->linkptr->shdr.sh_size;
+
+  strcpy(newbuf + newsym->name, oldsymname);
+
+  me->symtab->linkptr->data.d_size = newsize;
+  me->symtab->linkptr->shdr.sh_size = newsize;
+
+
+  /* Copy all other fields */
+  newsym->scnptr = newscn;
+  newsym->shndx = oldsym->shndx; /* If scnptr == NULL, this becomes relevant */
+  newsym->bind = oldsym->bind;
+  newsym->other = oldsym->other;
+  newsym->size = oldsym->size;
+  newsym->type = oldsym->type;
+  newsym->value = oldsym->value;
+
+  /* In executables, symbol addresses need to be in memory */
+  if (newscn) {
+    newsym->value += newscn->shdr.sh_addr;
+  }
+
+  /* Insert symbol */
+  CIRCLEQ_INSERT_TAIL(&me->symtab->symtab.syms, newsym, elem);
+
+  return;
+
+  ERROR:
+  if (newsym) {
+    free(newsym);
+  }
+}
+
+static void mergeSymtab(ElfuElf *me, const ElfuElf *mrel)
+{
+  ElfuSym *sym;
+
+  assert(me);
+  assert(mrel);
+
+  CIRCLEQ_FOREACH(sym, &mrel->symtab->symtab.syms, elem) {
+    insertSymClone(me, mrel->symtab, sym);
+  }
+}
+
+
+
+void elfu_mReladd(ElfuElf *me, const ElfuElf *mrel)
 {
   assert(me);
   assert(mrel);
 
   /* For each section in object file, guess how to insert it */
-  elfu_mScnForall(mrel, subScnAdd1, me, NULL);
+  elfu_mScnForall((ElfuElf*)mrel, subScnAdd1, me, NULL);
+
+  mergeSymtab(me, mrel);
 
   /* Do relocations and other stuff */
-  elfu_mScnForall(mrel, subScnAdd2, me, NULL);
+  elfu_mScnForall((ElfuElf*)mrel, subScnAdd2, me, NULL);
 
   /* Re-layout to accommodate new contents */
   elfu_mLayoutAuto(me);

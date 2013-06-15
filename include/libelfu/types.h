@@ -9,7 +9,6 @@
 
 typedef struct ElfuSym {
   GElf_Word name;
-  char *nameptr;
 
   GElf_Addr value;
   GElf_Word size;

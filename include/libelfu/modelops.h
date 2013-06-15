@@ -7,6 +7,9 @@
 #include <libelfu/types.h>
 
 
+#define ELFU_SYMSTR(symtabscn, off) (((char*)(symtabscn)->linkptr->data.d_buf) + (off))
+
+
 size_t elfu_mPhdrCount(ElfuElf *me);
 void elfu_mPhdrUpdateChildOffsets(ElfuPhdr *mp);
 
@@ -42,6 +45,6 @@ void elfu_mDumpElf(ElfuElf *me);
 ElfuElf* elfu_mFromElf(Elf *e);
     void elfu_mToElf(ElfuElf *me, Elf *e);
 
-void elfu_mReladd(ElfuElf *me, ElfuElf *mrel);
+void elfu_mReladd(ElfuElf *me, const ElfuElf *mrel);
 
 #endif

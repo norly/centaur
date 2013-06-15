@@ -11,6 +11,7 @@ static void flattenSymtab(ElfuElf *me)
 
   elfu_mLayoutAuto(me);
 
+  /* Update section indexes and count symbols */
   CIRCLEQ_FOREACH(sym, &me->symtab->symtab.syms, elem) {
     if (sym->scnptr) {
       sym->shndx = elfu_mScnIndex(me, sym->scnptr);
@@ -19,6 +20,7 @@ static void flattenSymtab(ElfuElf *me)
     numsyms++;
   }
 
+  /* Copy symbols to elfclass-specific format */
   if (me->elfclass == ELFCLASS32) {
     size_t newsize = (numsyms + 1) * sizeof(Elf32_Sym);
     size_t i;
