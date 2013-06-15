@@ -7,49 +7,6 @@
 #include <gelf.h>
 
 
-typedef struct ElfuScn {
-  GElf_Shdr shdr;
-
-  Elf_Data data;
-
-  struct ElfuScn *linkptr;
-  struct ElfuScn *infoptr;
-
-  struct ElfuScn *oldptr;
-
-  struct ElfuSymtab *symtab;
-  struct ElfuReltab *reltab;
-
-  CIRCLEQ_ENTRY(ElfuScn) elemChildScn;
-  CIRCLEQ_ENTRY(ElfuScn) elem;
-} ElfuScn;
-
-
-typedef struct ElfuPhdr {
-  GElf_Phdr phdr;
-
-  CIRCLEQ_HEAD(ChildScnList, ElfuScn) childScnList;
-  CIRCLEQ_HEAD(ChildPhdrList, ElfuPhdr) childPhdrList;
-
-  CIRCLEQ_ENTRY(ElfuPhdr) elemChildPhdr;
-  CIRCLEQ_ENTRY(ElfuPhdr) elem;
-} ElfuPhdr;
-
-
-typedef struct {
-  int elfclass;
-  GElf_Ehdr ehdr;
-
-  CIRCLEQ_HEAD(PhdrList, ElfuPhdr) phdrList;
-  CIRCLEQ_HEAD(OrphanScnList, ElfuScn) orphanScnList;
-
-  ElfuScn *shstrtab;
-} ElfuElf;
-
-
-
-
-
 typedef struct ElfuSym {
   char *name;
 
@@ -60,7 +17,7 @@ typedef struct ElfuSym {
   unsigned char type;
   unsigned char other;
 
-  ElfuScn *scnptr;
+  struct ElfuScn *scnptr;
   int shndx;
 
   CIRCLEQ_ENTRY(ElfuSym) elem;
@@ -93,5 +50,48 @@ typedef struct ElfuReltab {
   CIRCLEQ_HEAD(Rels, ElfuRel) rels;
 } ElfuReltab;
 
+
+
+
+
+
+typedef struct ElfuScn {
+  GElf_Shdr shdr;
+
+  Elf_Data data;
+
+  struct ElfuScn *linkptr;
+  struct ElfuScn *infoptr;
+
+  struct ElfuScn *oldptr;
+
+  struct ElfuSymtab symtab;
+  struct ElfuReltab reltab;
+
+  CIRCLEQ_ENTRY(ElfuScn) elemChildScn;
+  CIRCLEQ_ENTRY(ElfuScn) elem;
+} ElfuScn;
+
+
+typedef struct ElfuPhdr {
+  GElf_Phdr phdr;
+
+  CIRCLEQ_HEAD(ChildScnList, ElfuScn) childScnList;
+  CIRCLEQ_HEAD(ChildPhdrList, ElfuPhdr) childPhdrList;
+
+  CIRCLEQ_ENTRY(ElfuPhdr) elemChildPhdr;
+  CIRCLEQ_ENTRY(ElfuPhdr) elem;
+} ElfuPhdr;
+
+
+typedef struct {
+  int elfclass;
+  GElf_Ehdr ehdr;
+
+  CIRCLEQ_HEAD(PhdrList, ElfuPhdr) phdrList;
+  CIRCLEQ_HEAD(OrphanScnList, ElfuScn) orphanScnList;
+
+  ElfuScn *shstrtab;
+} ElfuElf;
 
 #endif

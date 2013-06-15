@@ -41,11 +41,9 @@ static GElf_Word pltLookupVal(ElfuElf *metarget, char *name)
 
 
   /* Look up name */
-  assert(relplt->reltab);
   assert(relplt->linkptr);
-  assert(relplt->linkptr->symtab);
   j = 0;
-  CIRCLEQ_FOREACH(rel, &relplt->reltab->rels, elem) {
+  CIRCLEQ_FOREACH(rel, &relplt->reltab.rels, elem) {
     GElf_Word i;
     ElfuSym *sym;
 
@@ -55,7 +53,7 @@ static GElf_Word pltLookupVal(ElfuElf *metarget, char *name)
       continue;
     }
 
-    sym = CIRCLEQ_FIRST(&relplt->linkptr->symtab->syms);
+    sym = CIRCLEQ_FIRST(&relplt->linkptr->symtab.syms);
     for (i = 1; i < rel->sym; i++) {
       sym = CIRCLEQ_NEXT(sym, elem);
     }
@@ -88,11 +86,10 @@ static GElf_Word symtabLookupVal(ElfuElf *metarget, ElfuScn *msst, GElf_Word ent
 
   assert(metarget);
   assert(msst);
-  assert(msst->symtab);
   assert(entry > 0);
-  assert(!CIRCLEQ_EMPTY(&msst->symtab->syms));
+  assert(!CIRCLEQ_EMPTY(&msst->symtab.syms));
 
-  sym = CIRCLEQ_FIRST(&msst->symtab->syms);
+  sym = CIRCLEQ_FIRST(&msst->symtab.syms);
   for (i = 1; i < entry; i++) {
     sym = CIRCLEQ_NEXT(sym, elem);
   }
@@ -140,7 +137,7 @@ void elfu_mRelocate32(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt)
              mstarget->shdr.sh_type,
              mstarget->shdr.sh_size);
 
-  CIRCLEQ_FOREACH(rel, &msrt->reltab->rels, elem) {
+  CIRCLEQ_FOREACH(rel, &msrt->reltab.rels, elem) {
     Elf32_Word *dest = (Elf32_Word*)(((char*)(mstarget->data.d_buf)) + rel->offset);
     Elf32_Word a = rel->addendUsed ? rel->addend : *dest;
     Elf32_Addr p = mstarget->shdr.sh_addr + rel->offset;

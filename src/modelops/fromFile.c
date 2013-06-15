@@ -16,23 +16,13 @@ static char* symstr(ElfuScn *symtab, size_t off)
 }
 
 
-static ElfuSymtab* symtabFromScn32(ElfuScn *ms, ElfuScn**origScnArr)
+static void parseSymtab32(ElfuScn *ms, ElfuScn**origScnArr)
 {
-  ElfuSymtab *st;
   size_t i;
 
   assert(ms);
   assert(ms->data.d_buf);
   assert(origScnArr);
-
-
-  st = malloc(sizeof(*st));
-  if (!st) {
-    ELFU_WARN("elfu_mSymtabFromScn32: malloc() failed for st.\n");
-    goto ERROR;
-  }
-
-  CIRCLEQ_INIT(&st->syms);
 
 
   for (i = 1; (i + 1) * sizeof(Elf32_Sym) <= ms->shdr.sh_size; i++) {
@@ -60,36 +50,17 @@ static ElfuSymtab* symtabFromScn32(ElfuScn *ms, ElfuScn**origScnArr)
     }
 
 
-    CIRCLEQ_INSERT_TAIL(&st->syms, sym, elem);
+    CIRCLEQ_INSERT_TAIL(&ms->symtab.syms, sym, elem);
   }
-
-
-  return st;
-
-  ERROR:
-  if (st) {
-    free(st);
-  }
-  return NULL;
 }
 
 
-static ElfuReltab* reltabFromScn32(ElfuScn *ms)
+static void parseReltab32(ElfuScn *ms)
 {
-  ElfuReltab *rt;
   size_t i;
 
   assert(ms);
   assert(ms->data.d_buf);
-
-
-  rt = malloc(sizeof(*rt));
-  if (!rt) {
-    ELFU_WARN("elfu_mReltabFromScn32: malloc() failed for rt.\n");
-    goto ERROR;
-  }
-
-  CIRCLEQ_INIT(&rt->rels);
 
 
   for (i = 0; (i + 1) * sizeof(Elf32_Rel) <= ms->shdr.sh_size; i++) {
@@ -107,17 +78,8 @@ static ElfuReltab* reltabFromScn32(ElfuScn *ms)
     rel->addendUsed = 0;
     rel->addend = 0;
 
-    CIRCLEQ_INSERT_TAIL(&rt->rels, rel, elem);
+    CIRCLEQ_INSERT_TAIL(&ms->reltab.rels, rel, elem);
   }
-
-
-  return rt;
-
-  ERROR:
-  if (rt) {
-    free(rt);
-  }
-  return NULL;
 }
 
 
@@ -255,8 +217,8 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 
   ms->oldptr = NULL;
 
-  ms->symtab = NULL;
-  ms->reltab = NULL;
+  CIRCLEQ_INIT(&ms->symtab.syms);
+  CIRCLEQ_INIT(&ms->reltab.rels);
 
 
   return ms;
@@ -408,11 +370,10 @@ ElfuElf* elfu_mFromElf(Elf *e)
         case SHT_SYMTAB:
         case SHT_DYNSYM:
           if (me->elfclass == ELFCLASS32) {
-            ms->symtab = symtabFromScn32(ms, secArray);
+            parseSymtab32(ms, secArray);
           } else if (me->elfclass == ELFCLASS64) {
             // TODO
           }
-          assert(ms->symtab);
           break;
       }
     }
@@ -425,11 +386,10 @@ ElfuElf* elfu_mFromElf(Elf *e)
       switch (ms->shdr.sh_type) {
         case SHT_REL:
           if (me->elfclass == ELFCLASS32) {
-            ms->reltab = reltabFromScn32(ms);
+            parseReltab32(ms);
           } else if (me->elfclass == ELFCLASS64) {
             // TODO
           }
-          assert(ms->reltab);
           break;
         case SHT_RELA:
           if (me->elfclass == ELFCLASS32) {
@@ -437,7 +397,6 @@ ElfuElf* elfu_mFromElf(Elf *e)
           } else if (me->elfclass == ELFCLASS64) {
             // TODO
           }
-          assert(ms->reltab);
           break;
       }
     }
