@@ -10,6 +10,13 @@
 #define ELFU_SYMSTR(symtabscn, off) (((char*)(symtabscn)->linkptr->data.d_buf) + (off))
 
 
+GElf_Word elfu_mSymtabLookupVal(ElfuElf *me, ElfuScn *msst, GElf_Word entry);
+void elfu_mSymtabFlatten(ElfuElf *me);
+
+
+void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);
+
+
 size_t elfu_mPhdrCount(ElfuElf *me);
 void elfu_mPhdrUpdateChildOffsets(ElfuPhdr *mp);
 

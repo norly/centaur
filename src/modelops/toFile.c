@@ -4,86 +4,6 @@
 #include <libelfu/libelfu.h>
 
 
-static void flattenSymtab(ElfuElf *me)
-{
-  ElfuSym *sym;
-  size_t numsyms = 0;
-
-  elfu_mLayoutAuto(me);
-
-  /* Update section indexes and count symbols */
-  CIRCLEQ_FOREACH(sym, &me->symtab->symtab.syms, elem) {
-    if (sym->scnptr) {
-      sym->shndx = elfu_mScnIndex(me, sym->scnptr);
-    }
-
-    numsyms++;
-  }
-
-  /* Copy symbols to elfclass-specific format */
-  if (me->elfclass == ELFCLASS32) {
-    size_t newsize = (numsyms + 1) * sizeof(Elf32_Sym);
-    size_t i;
-
-    if (me->symtab->data.d_buf) {
-      free(me->symtab->data.d_buf);
-    }
-    me->symtab->data.d_buf = malloc(newsize);
-    assert(me->symtab->data.d_buf);
-
-    me->symtab->data.d_size = newsize;
-    me->symtab->shdr.sh_size = newsize;
-    memset(me->symtab->data.d_buf, 0, newsize);
-
-    i = 1;
-    CIRCLEQ_FOREACH(sym, &me->symtab->symtab.syms, elem) {
-      Elf32_Sym *es = ((Elf32_Sym*)me->symtab->data.d_buf) + i;
-
-      es->st_name = sym->name;
-      es->st_value = sym->value;
-      es->st_size = sym->size;
-      es->st_info = ELF32_ST_INFO(sym->bind, sym->type);
-      es->st_other = sym->other;
-      es->st_shndx = sym->shndx;
-
-      i++;
-    }
-  } else if (me->elfclass == ELFCLASS64) {
-    size_t newsize = (numsyms + 1) * sizeof(Elf64_Sym);
-    size_t i;
-
-    if (me->symtab->data.d_buf) {
-      free(me->symtab->data.d_buf);
-    }
-    me->symtab->data.d_buf = malloc(newsize);
-    assert(me->symtab->data.d_buf);
-
-    me->symtab->data.d_size = newsize;
-    me->symtab->shdr.sh_size = newsize;
-    memset(me->symtab->data.d_buf, 0, newsize);
-
-    i = 1;
-    CIRCLEQ_FOREACH(sym, &me->symtab->symtab.syms, elem) {
-      Elf64_Sym *es = ((Elf64_Sym*)me->symtab->data.d_buf) + i;
-
-      es->st_name = sym->name;
-      es->st_value = sym->value;
-      es->st_size = sym->size;
-      es->st_info = ELF64_ST_INFO(sym->bind, sym->type);
-      es->st_other = sym->other;
-      es->st_shndx = sym->shndx;
-
-      i++;
-    }
-  } else {
-    // Unknown elfclass
-    assert(0);
-  }
-
-  elfu_mLayoutAuto(me);
-}
-
-
 static void modelToPhdrs(ElfuElf *me, Elf *e)
 {
   ElfuPhdr *mp;
@@ -163,7 +83,7 @@ static void* modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 void elfu_mToElf(ElfuElf *me, Elf *e)
 {
   if (me->symtab) {
-    flattenSymtab(me);
+    elfu_mSymtabFlatten(me);
   }
 
 
