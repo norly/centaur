@@ -1,4 +1,4 @@
-PROJ := centaur
+PROJ := elfucli
 
 LIBRARIES := libelf
 
