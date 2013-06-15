@@ -30,7 +30,8 @@ static void parseSymtab32(ElfuScn *ms, ElfuScn**origScnArr)
     ElfuSym *sym = malloc(sizeof(*sym));
     assert(sym);
 
-    sym->name = symstr(ms, cursym->st_name);
+    sym->name = cursym->st_name;
+    sym->nameptr = symstr(ms, cursym->st_name);
     sym->value = cursym->st_value;
     sym->size = cursym->st_size;
     sym->bind = ELF32_ST_BIND(cursym->st_info);
@@ -256,6 +257,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
   CIRCLEQ_INIT(&me->phdrList);
   CIRCLEQ_INIT(&me->orphanScnList);
   me->shstrtab = NULL;
+  me->symtab = NULL;
 
   me->elfclass = gelf_getclass(e);
   assert(me->elfclass != ELFCLASSNONE);
@@ -368,6 +370,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
 
       switch (ms->shdr.sh_type) {
         case SHT_SYMTAB:
+          me->symtab = ms;
         case SHT_DYNSYM:
           if (me->elfclass == ELFCLASS32) {
             parseSymtab32(ms, secArray);

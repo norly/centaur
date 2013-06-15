@@ -8,7 +8,8 @@
 
 
 typedef struct ElfuSym {
-  char *name;
+  GElf_Word name;
+  char *nameptr;
 
   GElf_Addr value;
   GElf_Word size;
@@ -92,6 +93,8 @@ typedef struct {
   CIRCLEQ_HEAD(OrphanScnList, ElfuScn) orphanScnList;
 
   ElfuScn *shstrtab;
+
+  ElfuScn *symtab;
 } ElfuElf;
 
 #endif

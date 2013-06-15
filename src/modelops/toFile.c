@@ -1,6 +1,61 @@
+#include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <libelfu/libelfu.h>
 
+
+static void flattenSymtab(ElfuElf *me)
+{
+  ElfuSym *sym;
+  size_t numsyms = 0;
+
+  elfu_mLayoutAuto(me);
+
+  CIRCLEQ_FOREACH(sym, &me->symtab->symtab.syms, elem) {
+    if (sym->scnptr) {
+      sym->shndx = elfu_mScnIndex(me, sym->scnptr);
+    }
+
+    numsyms++;
+  }
+
+  if (me->elfclass == ELFCLASS32) {
+    size_t newsize = (numsyms + 1) * sizeof(Elf32_Sym);
+    size_t i;
+
+    if (me->symtab->data.d_buf) {
+      free(me->symtab->data.d_buf);
+    }
+    me->symtab->data.d_buf = malloc(newsize);
+    assert(me->symtab->data.d_buf);
+
+    me->symtab->data.d_size = newsize;
+    me->symtab->shdr.sh_size = newsize;
+    memset(me->symtab->data.d_buf, 0, newsize);
+
+    i = 1;
+    CIRCLEQ_FOREACH(sym, &me->symtab->symtab.syms, elem) {
+      Elf32_Sym *es = ((Elf32_Sym*)me->symtab->data.d_buf) + i;
+
+      es->st_name = sym->name;
+      es->st_value = sym->value;
+      es->st_size = sym->size;
+      es->st_info = ELF32_ST_INFO(sym->bind, sym->type);
+      es->st_other = sym->other;
+      es->st_shndx = sym->shndx;
+
+      i++;
+    }
+  } else if (me->elfclass == ELFCLASS64) {
+    // TODO
+    assert(0);
+  } else {
+    // Never reached
+    assert(0);
+  }
+
+  elfu_mLayoutAuto(me);
+}
 
 
 static void modelToPhdrs(ElfuElf *me, Elf *e)
@@ -81,6 +136,11 @@ static void* modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 
 void elfu_mToElf(ElfuElf *me, Elf *e)
 {
+  if (me->symtab) {
+    flattenSymtab(me);
+  }
+
+
   /* We control the ELF file's layout now. */
   /* tired's libelf also offers ELF_F_LAYOUT_OVERLAP for overlapping sections,
    * but we don't want that since we filtered it out in the reading stage

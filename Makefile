@@ -25,6 +25,7 @@ default: $(EXE)
 
 .PHONY: check
 check: $(EXE)
+	$(error the re-layouting has broken make check for now, sorry.)
 	$(EXE) $(EXE) -o testexe
 	@cmp $(EXE) testexe
 	@rm testexe

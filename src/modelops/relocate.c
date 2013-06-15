@@ -58,11 +58,11 @@ static GElf_Word pltLookupVal(ElfuElf *metarget, char *name)
       sym = CIRCLEQ_NEXT(sym, elem);
     }
 
-    if (!sym->name) {
+    if (!sym->nameptr) {
       continue;
     }
 
-    if (!strcmp(sym->name, name)) {
+    if (!strcmp(sym->nameptr, name)) {
       /* If this is the symbol we are looking for, then in an x86 binary
        * the jump to the dynamic symbol is probably at offset (j * 16)
        * from the start of the PLT, where j is the PLT entry and 16 is
@@ -105,7 +105,7 @@ static GElf_Word symtabLookupVal(ElfuElf *metarget, ElfuScn *msst, GElf_Word ent
         /* Look the symbol up in .dyn.plt. If it cannot be found there then
          * .rel.dyn may need to be expanded with a COPY relocation so the
          * dynamic linker fixes up the (TODO). */
-        return pltLookupVal(metarget, sym->name);
+        return pltLookupVal(metarget, sym->nameptr);
       } else if (sym->shndx == SHN_ABS) {
         return sym->value;
       } else {
@@ -121,7 +121,7 @@ static GElf_Word symtabLookupVal(ElfuElf *metarget, ElfuScn *msst, GElf_Word ent
       ELFU_WARN("symtabLookupVal: Symbol type FILE is not supported, using 0.\n");
       return 0;
     default:
-      ELFU_WARN("symtabLookupVal: Unknown symbol type %d for %s.\n", sym->type, sym->name);
+      ELFU_WARN("symtabLookupVal: Unknown symbol type %d for %s.\n", sym->type, sym->nameptr);
       return 0;
   }
 }
