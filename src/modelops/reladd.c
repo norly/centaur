@@ -180,7 +180,7 @@ static void* subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
 
     case SHT_REL: /* 9 */
       /* Relocate. */
-      elfu_mRelocate32(me, elfu_mScnByOldscn(me, ms->infoptr), ms);
+      elfu_mRelocate(me, elfu_mScnByOldscn(me, ms->infoptr), ms);
       break;
 
     case SHT_RELA: /* 4 */

@@ -137,7 +137,7 @@ static GElf_Word symtabLookupVal(ElfuElf *metarget, ElfuScn *msst, GElf_Word ent
   }
 }
 
-void elfu_mRelocate32(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt)
+void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt)
 {
   ElfuRel *rel;
 
@@ -196,7 +196,5 @@ void elfu_mRelocate32(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt)
           ELFU_DEBUG("Skipping relocation: Unknown type %d", rel->type);
       }
     }
-
-
   }
 }

@@ -29,7 +29,7 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
 int elfu_mLayoutAuto(ElfuElf *me);
 
 
-void elfu_mRelocate32(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);
+void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);
 
 
 int elfu_mCheck(ElfuElf *me);
