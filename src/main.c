@@ -33,53 +33,46 @@ int main(int argc, char **argv)
     goto EXIT;
   }
 
-
   /* Now that we have a (hopefully) sane environment, execute commands. */
   me = elfu_mFromElf(hIn.e);
-  if (me) {
-    closeElf(&hIn);
-    printf("Model successfully loaded.\n");
-
-    //elfu_mDumpElf(me);
-
-    elfu_mCheck(me);
-    printf("Input model checked.\n");
-  } else {
+  closeElf(&hIn);
+  if (!me) {
     printf("Failed to load model, aborting.\n");
     goto EXIT;
   }
 
+  elfu_mCheck(me);
 
-  /* Copy the input ELF to the output file if the latter is specified.
-   * Perform requested transformations on the memory model on-the-fly. */
-  if (!opts.fnOutput) {
-    printf("No output file specified - no further operations performed.\n");
-  } else {
-    if (opts.fnReladd) {
-      ELFHandles hRel = { 0 };
-      ElfuElf *mrel = NULL;
+  //elfu_mDumpElf(me);
 
-      openElf(&hRel, opts.fnReladd, ELF_C_READ);
-      if (!hRel.e) {
-        printf("--reladd: Failed to open file for --reladd, skipping operation.\n");
+  /* Perform requested transformations on the memory model on-the-fly. */
+  if (opts.fnReladd) {
+    ELFHandles hRel = { 0 };
+    ElfuElf *mrel = NULL;
+
+    openElf(&hRel, opts.fnReladd, ELF_C_READ);
+    if (!hRel.e) {
+      printf("--reladd: Failed to open file for --reladd, skipping operation.\n");
+    } else {
+      mrel = elfu_mFromElf(hRel.e);
+      closeElf(&hRel);
+      if (!mrel) {
+        printf("--reladd: Failed to load model for --reladd, skipping operation.\n");
       } else {
-        mrel = elfu_mFromElf(hRel.e);
-        closeElf(&hRel);
-        if (!me) {
-          printf("--reladd: Failed to load model for --reladd, skipping operation.\n");
-        } else {
-          printf("--reladd: Model successfully loaded.\n");
-          elfu_mCheck(mrel);
-          printf("--reladd: Input model checked.\n");
-          elfu_mReladd(me, mrel);
-        }
+        elfu_mCheck(mrel);
+        elfu_mReladd(me, mrel);
+        printf("--reladd: Injected %s.\n", opts.fnReladd);
       }
     }
+  }
 
+  //elfu_mDumpElf(me);
+
+  /* Copy the input ELF to the output file if one is specified. */
+  if (opts.fnOutput) {
+    printf("Writing modified file to %s.\n", opts.fnOutput);
     elfu_mCheck(me);
-    printf("Output model checked.\n");
 
-    //elfu_mDumpElf(me);
 
     openElf(&hOut, opts.fnOutput, ELF_C_WRITE);
     if (!hOut.e) {
@@ -89,19 +82,16 @@ int main(int argc, char **argv)
     }
 
     elfu_mToElf(me, hOut.e);
-    printf("Model converted to ELF, ready to be written.\n");
-  }
 
-
-
-EXIT:
-  if (hOut.e) {
     if (elf_update(hOut.e, ELF_C_WRITE) < 0) {
       fprintf(stderr, "elf_update() failed: %s\n", elf_errmsg(-1));
     }
     closeElf(&hOut);
   }
 
+
+
+EXIT:
   if (hIn.e) {
     closeElf(&hIn);
   }
