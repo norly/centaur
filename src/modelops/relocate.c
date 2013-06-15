@@ -57,7 +57,8 @@ static GElf_Word pltLookupVal(ElfuElf *metarget, char *name)
      * Technically, these relocations write the functions' addresses
      * to the GOT, not the PLT, after the dynamic linker has found
      * them. */
-    if (rel->type != R_386_JMP_SLOT) {
+    if ((metarget->elfclass == ELFCLASS32 && rel->type != R_386_JMP_SLOT)
+        || (metarget->elfclass == ELFCLASS64 && rel->type != R_X86_64_JUMP_SLOT)) {
       continue;
     }
 
@@ -148,29 +149,54 @@ void elfu_mRelocate32(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt)
              mstarget->shdr.sh_size);
 
   CIRCLEQ_FOREACH(rel, &msrt->reltab.rels, elem) {
-    Elf32_Word *dest = (Elf32_Word*)(((char*)(mstarget->data.d_buf)) + rel->offset);
-    Elf32_Word a = rel->addendUsed ? rel->addend : *dest;
-    Elf32_Addr p = mstarget->shdr.sh_addr + rel->offset;
-    Elf32_Addr s = symtabLookupVal(metarget, msrt->linkptr, rel->sym);
-    Elf32_Word newval = *dest;
+    Elf32_Word *dest32 = (Elf32_Word*)(((char*)(mstarget->data.d_buf)) + rel->offset);
+    Elf64_Word *dest64 = (Elf64_Word*)(((char*)(mstarget->data.d_buf)) + rel->offset);
 
-    switch(rel->type) {
-      case R_386_NONE:
-        ELFU_DEBUG("Skipping relocation: R_386_NONE");
-        break;
-      case R_386_32:
-        ELFU_DEBUG("Relocation: R_386_32");
-        newval = s + a;
-        break;
-      case R_386_PC32:
-        ELFU_DEBUG("Relocation: R_386_PC32");
-        newval = s + a - p;
-        break;
 
-      default:
-        ELFU_DEBUG("Skipping relocation: Unknown type %d", rel->type);
+    if (metarget->elfclass == ELFCLASS32) {
+      Elf32_Word a32 = rel->addendUsed ? rel->addend : *dest32;
+      Elf32_Addr p32 = mstarget->shdr.sh_addr + rel->offset;
+      Elf32_Addr s32 = symtabLookupVal(metarget, msrt->linkptr, rel->sym);
+      switch(rel->type) {
+        case R_386_NONE:
+          ELFU_DEBUG("Skipping relocation: R_386_NONE\n");
+          break;
+        case R_386_32:
+          *dest32 = s32 + a32;
+          break;
+        case R_386_PC32:
+          *dest32 = s32 + a32 - p32;
+          break;
+
+        default:
+          ELFU_DEBUG("Skipping relocation: Unknown type %d\n", rel->type);
+      }
+    } else if (metarget->elfclass == ELFCLASS64) {
+      /* x86-64 only uses RELA with explicit addend. */
+      assert(rel->addendUsed);
+      Elf64_Word a64 = rel->addend;
+      Elf64_Addr p64 = mstarget->shdr.sh_addr + rel->offset;
+      Elf64_Addr s64 = symtabLookupVal(metarget, msrt->linkptr, rel->sym);
+
+      switch(rel->type) {
+        case R_X86_64_NONE:
+          ELFU_DEBUG("Skipping relocation: R_386_NONE\n");
+          break;
+        case R_X86_64_64:
+          *dest64 = s64 + a64;
+          break;
+        case R_X86_64_PC32:
+          *dest32 = s64 + a64 - p64;
+          break;
+        case R_X86_64_32:
+          *dest32 = s64 + a64;
+          break;
+
+        default:
+          ELFU_DEBUG("Skipping relocation: Unknown type %d", rel->type);
+      }
     }
-    ELFU_DEBUG(", overwriting %x with %x.\n", *dest, newval);
-    *dest = newval;
+
+
   }
 }

@@ -49,10 +49,34 @@ static void flattenSymtab(ElfuElf *me)
       i++;
     }
   } else if (me->elfclass == ELFCLASS64) {
-    // TODO
-    assert(0);
+    size_t newsize = (numsyms + 1) * sizeof(Elf64_Sym);
+    size_t i;
+
+    if (me->symtab->data.d_buf) {
+      free(me->symtab->data.d_buf);
+    }
+    me->symtab->data.d_buf = malloc(newsize);
+    assert(me->symtab->data.d_buf);
+
+    me->symtab->data.d_size = newsize;
+    me->symtab->shdr.sh_size = newsize;
+    memset(me->symtab->data.d_buf, 0, newsize);
+
+    i = 1;
+    CIRCLEQ_FOREACH(sym, &me->symtab->symtab.syms, elem) {
+      Elf64_Sym *es = ((Elf64_Sym*)me->symtab->data.d_buf) + i;
+
+      es->st_name = sym->name;
+      es->st_value = sym->value;
+      es->st_size = sym->size;
+      es->st_info = ELF64_ST_INFO(sym->bind, sym->type);
+      es->st_other = sym->other;
+      es->st_shndx = sym->shndx;
+
+      i++;
+    }
   } else {
-    // Never reached
+    // Unknown elfclass
     assert(0);
   }
 

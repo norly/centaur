@@ -5,41 +5,69 @@
 #include <libelfu/libelfu.h>
 
 
-static void parseSymtab32(ElfuScn *ms, ElfuScn**origScnArr)
+static void parseSymtab(ElfuElf *me, ElfuScn *ms, ElfuScn**origScnArr)
 {
+  ElfuSym *sym;
   size_t i;
 
   assert(ms);
   assert(ms->data.d_buf);
   assert(origScnArr);
 
+  /* Parse symbols from their elfclass-specific format */
+  if (me->elfclass == ELFCLASS32) {
+    for (i = 1; (i + 1) * sizeof(Elf32_Sym) <= ms->shdr.sh_size; i++) {
+      Elf32_Sym *cursym = ((Elf32_Sym*)ms->data.d_buf) + i;
+      ElfuSym *newsym = malloc(sizeof(*sym));
+      assert(newsym);
 
-  for (i = 1; (i + 1) * sizeof(Elf32_Sym) <= ms->shdr.sh_size; i++) {
-    Elf32_Sym *cursym = &(((Elf32_Sym*)ms->data.d_buf)[i]);
-    ElfuSym *sym = malloc(sizeof(*sym));
-    assert(sym);
+      newsym->name = cursym->st_name;
+      newsym->value = cursym->st_value;
+      newsym->size = cursym->st_size;
+      newsym->bind = ELF32_ST_BIND(cursym->st_info);
+      newsym->type = ELF32_ST_TYPE(cursym->st_info);
+      newsym->other = cursym->st_other;
+      newsym->shndx = cursym->st_shndx;
 
-    sym->name = cursym->st_name;
-    sym->value = cursym->st_value;
-    sym->size = cursym->st_size;
-    sym->bind = ELF32_ST_BIND(cursym->st_info);
-    sym->type = ELF32_ST_TYPE(cursym->st_info);
-    sym->other = cursym->st_other;
-    sym->shndx = cursym->st_shndx;
 
-    switch (cursym->st_shndx) {
+
+      CIRCLEQ_INSERT_TAIL(&ms->symtab.syms, newsym, elem);
+    }
+  } else if (me->elfclass == ELFCLASS64) {
+    for (i = 1; (i + 1) * sizeof(Elf64_Sym) <= ms->shdr.sh_size; i++) {
+      Elf64_Sym *cursym = ((Elf64_Sym*)ms->data.d_buf) + i;
+      ElfuSym *newsym = malloc(sizeof(*sym));
+      assert(newsym);
+
+      newsym->name = cursym->st_name;
+      newsym->value = cursym->st_value;
+      newsym->size = cursym->st_size;
+      newsym->bind = ELF64_ST_BIND(cursym->st_info);
+      newsym->type = ELF64_ST_TYPE(cursym->st_info);
+      newsym->other = cursym->st_other;
+      newsym->shndx = cursym->st_shndx;
+
+
+
+      CIRCLEQ_INSERT_TAIL(&ms->symtab.syms, newsym, elem);
+    }
+  } else {
+    // Unknown elfclass
+    assert(0);
+  }
+
+  /* For each section, find the section it points to if any. */
+  CIRCLEQ_FOREACH(sym, &ms->symtab.syms, elem) {
+    switch (sym->shndx) {
       case SHN_UNDEF:
       case SHN_ABS:
       case SHN_COMMON:
         sym->scnptr = NULL;
         break;
       default:
-        sym->scnptr = origScnArr[cursym->st_shndx - 1];
+        sym->scnptr = origScnArr[sym->shndx - 1];
         break;
     }
-
-
-    CIRCLEQ_INSERT_TAIL(&ms->symtab.syms, sym, elem);
   }
 }
 
@@ -60,12 +88,36 @@ static void parseReltab32(ElfuScn *ms)
     assert(rel);
 
     rel->offset = currel->r_offset;
-
     rel->sym = ELF32_R_SYM(currel->r_info);
     rel->type = ELF32_R_TYPE(currel->r_info);
-
     rel->addendUsed = 0;
     rel->addend = 0;
+
+    CIRCLEQ_INSERT_TAIL(&ms->reltab.rels, rel, elem);
+  }
+}
+
+
+static void parseRelatab64(ElfuScn *ms)
+{
+  size_t i;
+
+  assert(ms);
+  assert(ms->data.d_buf);
+
+
+  for (i = 0; (i + 1) * sizeof(Elf64_Rela) <= ms->shdr.sh_size; i++) {
+    Elf64_Rela *currel = &(((Elf64_Rela*)ms->data.d_buf)[i]);
+    ElfuRel *rel;
+
+    rel = malloc(sizeof(*rel));
+    assert(rel);
+
+    rel->offset = currel->r_offset;
+    rel->sym = ELF64_R_SYM(currel->r_info);
+    rel->type = ELF64_R_TYPE(currel->r_info);
+    rel->addendUsed = 1;
+    rel->addend = currel->r_addend;
 
     CIRCLEQ_INSERT_TAIL(&ms->reltab.rels, rel, elem);
   }
@@ -360,11 +412,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
         case SHT_SYMTAB:
           me->symtab = ms;
         case SHT_DYNSYM:
-          if (me->elfclass == ELFCLASS32) {
-            parseSymtab32(ms, secArray);
-          } else if (me->elfclass == ELFCLASS64) {
-            // TODO
-          }
+          parseSymtab(me, ms, secArray);
           break;
       }
     }
@@ -379,14 +427,14 @@ ElfuElf* elfu_mFromElf(Elf *e)
           if (me->elfclass == ELFCLASS32) {
             parseReltab32(ms);
           } else if (me->elfclass == ELFCLASS64) {
-            // TODO
+            // Not used on x86-64
           }
           break;
         case SHT_RELA:
           if (me->elfclass == ELFCLASS32) {
             // TODO
           } else if (me->elfclass == ELFCLASS64) {
-            // TODO
+            parseRelatab64(ms);
           }
           break;
       }
