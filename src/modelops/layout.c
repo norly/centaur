@@ -115,7 +115,7 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
       GElf_Off endAddr = OFFS_END(last->phdr.p_vaddr, last->phdr.p_filesz);
       ElfuScn *ms;
 
-      ELFU_INFO("Expanding NOBITS at address 0x%jx...\n", endAddr);
+      ELFU_INFO("Expanding NOBITS at address 0x%x...\n", (unsigned)endAddr);
 
       CIRCLEQ_FOREACH(ms, &last->childScnList, elemChildScn) {
         if (ms->shdr.sh_offset == endOff) {
@@ -124,7 +124,8 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
           ms->data.d_buf = malloc(ms->shdr.sh_size);
           memset(ms->data.d_buf, '\0', ms->shdr.sh_size);
           if (!ms->data.d_buf) {
-            ELFU_WARN("mExpandNobits: Could not allocate %jd bytes for NOBITS expansion. Data may be inconsistent.\n", ms->shdr.sh_size);
+            ELFU_WARN("mExpandNobits: Could not allocate %u bytes for NOBITS expansion. Data may be inconsistent.\n",
+                      (unsigned)ms->shdr.sh_size);
             assert(0);
             goto ERROR;
           }
@@ -227,11 +228,14 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
 
 static int cmpPhdrOffs(const void *mp1, const void *mp2)
 {
+  ElfuPhdr *p1;
+  ElfuPhdr *p2;
+
   assert(mp1);
   assert(mp2);
 
-  ElfuPhdr *p1 = *(ElfuPhdr**)mp1;
-  ElfuPhdr *p2 = *(ElfuPhdr**)mp2;
+  p1 = *(ElfuPhdr**)mp1;
+  p2 = *(ElfuPhdr**)mp2;
 
   assert(p1);
   assert(p2);

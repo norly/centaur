@@ -99,25 +99,25 @@ void elfu_mDumpPhdr(ElfuElf *me, ElfuPhdr *mp)
   assert(me);
   assert(mp);
 
-  ELFU_INFO("%12s %8jx %8jx %8jx %8jx %8jx %8jx %8jx %8jx\n",
+  ELFU_INFO("%12s %8x %8x %8x %8x %8x %8x %8x %8x\n",
             segmentTypeStr(mp->phdr.p_type),
-            (uintmax_t) mp->phdr.p_type,
-            (uintmax_t) mp->phdr.p_offset,
-            (uintmax_t) mp->phdr.p_vaddr,
-            (uintmax_t) mp->phdr.p_paddr,
-            (uintmax_t) mp->phdr.p_filesz,
-            (uintmax_t) mp->phdr.p_memsz,
-            (uintmax_t) mp->phdr.p_flags,
-            (uintmax_t) mp->phdr.p_align);
+            (unsigned)mp->phdr.p_type,
+            (unsigned)mp->phdr.p_offset,
+            (unsigned)mp->phdr.p_vaddr,
+            (unsigned)mp->phdr.p_paddr,
+            (unsigned)mp->phdr.p_filesz,
+            (unsigned)mp->phdr.p_memsz,
+            (unsigned)mp->phdr.p_flags,
+            (unsigned)mp->phdr.p_align);
 
   if (!CIRCLEQ_EMPTY(&mp->childPhdrList)) {
     ElfuPhdr *mpc;
 
     ELFU_INFO("      -> Child PHDRs:\n");
     CIRCLEQ_FOREACH(mpc, &mp->childPhdrList, elemChildPhdr) {
-      ELFU_INFO("        * %-8s @ %8jx\n",
+      ELFU_INFO("        * %-8s @ %8x\n",
                 segmentTypeStr(mpc->phdr.p_type),
-                mpc->phdr.p_vaddr);
+                (unsigned)mpc->phdr.p_vaddr);
     }
   }
 
@@ -126,9 +126,9 @@ void elfu_mDumpPhdr(ElfuElf *me, ElfuPhdr *mp)
 
     ELFU_INFO("      -> Child sections:\n");
     CIRCLEQ_FOREACH(msc, &mp->childScnList, elemChildScn) {
-      ELFU_INFO("        * %-17s @ %8jx\n",
+      ELFU_INFO("        * %-17s @ %8x\n",
                 elfu_mScnName(me, msc),
-                msc->shdr.sh_addr);
+                (unsigned)msc->shdr.sh_addr);
     }
   }
 }
@@ -146,15 +146,15 @@ void elfu_mDumpScn(ElfuElf *me, ElfuScn *ms)
   linkstr = ms->linkptr ? elfu_mScnName(me, ms->linkptr) : "";
   infostr = ms->infoptr ? elfu_mScnName(me, ms->infoptr) : "";
 
-  ELFU_INFO("%-17s %-15s %8jx %9jx %8jx %2jx %2jx %2jd %-17s %-17s\n",
+  ELFU_INFO("%-17s %-15s %8x %9x %8x %2x %2x %2d %-17s %-17s\n",
             namestr,
             typestr,
-            ms->shdr.sh_addr,
-            ms->shdr.sh_offset,
-            ms->shdr.sh_size,
-            ms->shdr.sh_entsize,
-            ms->shdr.sh_flags,
-            ms->shdr.sh_addralign,
+            (unsigned)ms->shdr.sh_addr,
+            (unsigned)ms->shdr.sh_offset,
+            (unsigned)ms->shdr.sh_size,
+            (unsigned)ms->shdr.sh_entsize,
+            (unsigned)ms->shdr.sh_flags,
+            (unsigned)ms->shdr.sh_addralign,
             linkstr,
             infostr);
 }
@@ -172,9 +172,9 @@ void elfu_mDumpEhdr(ElfuElf *me)
   ELFU_INFO("     e_type       %8x\n", me->ehdr.e_type);
   ELFU_INFO("     e_machine    %8x\n", me->ehdr.e_machine);
   ELFU_INFO("     e_version    %8x\n", me->ehdr.e_version);
-  ELFU_INFO("     e_entry      %8jx\n", me->ehdr.e_entry);
-  ELFU_INFO("     e_phoff      %8jx\n", me->ehdr.e_phoff);
-  ELFU_INFO("     e_shoff      %8jx\n", me->ehdr.e_shoff);
+  ELFU_INFO("     e_entry      %8x\n", (unsigned)me->ehdr.e_entry);
+  ELFU_INFO("     e_phoff      %8x\n", (unsigned)me->ehdr.e_phoff);
+  ELFU_INFO("     e_shoff      %8x\n", (unsigned)me->ehdr.e_shoff);
   ELFU_INFO("     e_flags      %8x\n", me->ehdr.e_flags);
   ELFU_INFO("     e_ehsize     %8x\n", me->ehdr.e_ehsize);
   ELFU_INFO("     e_phentsize  %8x\n", me->ehdr.e_phentsize);
@@ -224,9 +224,9 @@ void elfu_mDumpElf(ElfuElf *me)
 
   ELFU_INFO("Orphaned sections:\n");
   CIRCLEQ_FOREACH(ms, &me->orphanScnList, elemChildScn) {
-    ELFU_INFO("        * %-17s @ %8jx\n",
+    ELFU_INFO("        * %-17s @ %8x\n",
               elfu_mScnName(me, ms),
-              ms->shdr.sh_addr);
+              (unsigned)ms->shdr.sh_addr);
   }
   ELFU_INFO("\n");
 

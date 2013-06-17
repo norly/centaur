@@ -13,9 +13,9 @@ void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt)
   assert(mstarget);
   assert(msrt);
 
-  ELFU_DEBUG("Relocating in section of type %d size %jx\n",
+  ELFU_DEBUG("Relocating in section of type %u size %x\n",
              mstarget->shdr.sh_type,
-             mstarget->shdr.sh_size);
+             (unsigned)mstarget->shdr.sh_size);
 
   CIRCLEQ_FOREACH(rel, &msrt->reltab.rels, elem) {
     Elf32_Word *dest32 = (Elf32_Word*)(((char*)(mstarget->data.d_buf)) + rel->offset);
@@ -41,11 +41,12 @@ void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt)
           ELFU_DEBUG("Skipping relocation: Unknown type %d\n", rel->type);
       }
     } else if (metarget->elfclass == ELFCLASS64) {
-      /* x86-64 only uses RELA with explicit addend. */
-      assert(rel->addendUsed);
       Elf64_Word a64 = rel->addend;
       Elf64_Addr p64 = mstarget->shdr.sh_addr + rel->offset;
       Elf64_Addr s64 = elfu_mSymtabLookupVal(metarget, msrt->linkptr, rel->sym);
+
+      /* x86-64 only uses RELA with explicit addend. */
+      assert(rel->addendUsed);
 
       switch(rel->type) {
         case R_X86_64_NONE:

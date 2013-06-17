@@ -52,7 +52,7 @@ static void parseSymtab(ElfuElf *me, ElfuScn *ms, ElfuScn**origScnArr)
       CIRCLEQ_INSERT_TAIL(&ms->symtab.syms, newsym, elem);
     }
   } else {
-    // Unknown elfclass
+    /* Unknown elfclass */
     assert(0);
   }
 
@@ -126,11 +126,14 @@ static void parseRelatab64(ElfuScn *ms)
 
 static int cmpScnOffs(const void *ms1, const void *ms2)
 {
+  ElfuScn *s1 = *(ElfuScn**)ms1;
+  ElfuScn *s2 = *(ElfuScn**)ms2;
+
   assert(ms1);
   assert(ms2);
 
-  ElfuScn *s1 = *(ElfuScn**)ms1;
-  ElfuScn *s2 = *(ElfuScn**)ms2;
+  s1 = *(ElfuScn**)ms1;
+  s2 = *(ElfuScn**)ms2;
 
   assert(s1);
   assert(s2);
@@ -230,7 +233,7 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 
     ms->data.d_buf = malloc(ms->shdr.sh_size);
     if (!ms->data.d_buf) {
-      ELFU_WARN("modelFromSection: malloc() failed for data buffer (%jx bytes).\n", ms->shdr.sh_size);
+      ELFU_WARN("modelFromSection: malloc() failed for data buffer (%x bytes).\n", (unsigned)ms->shdr.sh_size);
       goto ERROR;
     }
 
@@ -246,7 +249,7 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
       if (data->d_off + data->d_size > ms->shdr.sh_size) {
         ELFU_WARN("modelFromSection: libelf delivered a bogus data blob. Skipping\n");
       } else {
-        memcpy(ms->data.d_buf + data->d_off, data->d_buf, data->d_size);
+        memcpy((char*)ms->data.d_buf + data->d_off, data->d_buf, data->d_size);
       }
 
       data = elf_rawdata(scn, data);
@@ -427,12 +430,14 @@ ElfuElf* elfu_mFromElf(Elf *e)
           if (me->elfclass == ELFCLASS32) {
             parseReltab32(ms);
           } else if (me->elfclass == ELFCLASS64) {
-            // Not used on x86-64
+            /* Not used on x86-64 */
+            assert(0);
           }
           break;
         case SHT_RELA:
           if (me->elfclass == ELFCLASS32) {
-            // TODO
+            /* Not used on x86-32 */
+            assert(0);
           } else if (me->elfclass == ELFCLASS64) {
             parseRelatab64(ms);
           }

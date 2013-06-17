@@ -34,10 +34,10 @@ static void modelToPhdrs(ElfuElf *me, Elf *e)
 
 static void* modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 {
+  Elf_Scn *scnOut;
+  Elf *e = (Elf*)aux1;
   (void) me;
   (void) aux2;
-  Elf *e = (Elf*)aux1;
-  Elf_Scn *scnOut;
 
   scnOut = elf_newscn(e);
   if (!scnOut) {

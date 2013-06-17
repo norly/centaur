@@ -146,11 +146,14 @@ static void* subScnsToArray(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 
 static int cmpScnOffs(const void *ms1, const void *ms2)
 {
+  ElfuScn *s1;
+  ElfuScn *s2;
+
   assert(ms1);
   assert(ms2);
 
-  ElfuScn *s1 = *(ElfuScn**)ms1;
-  ElfuScn *s2 = *(ElfuScn**)ms2;
+  s1 = *(ElfuScn**)ms1;
+  s2 = *(ElfuScn**)ms2;
 
   assert(s1);
   assert(s2);
@@ -167,11 +170,11 @@ static int cmpScnOffs(const void *ms1, const void *ms2)
 
 ElfuScn** elfu_mScnSortedByOffset(ElfuElf *me, size_t *count)
 {
-  assert(me);
-
   size_t numSecs;
   ElfuScn **sortedSecs;
   size_t i;
+
+  assert(me);
 
   /* Sort sections by offset in file */
   numSecs = elfu_mScnCount(me);

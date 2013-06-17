@@ -14,7 +14,7 @@ SOURCES := $(shell find $(SRCDIR)/ -iname "*.c")
 OBJS    := $(patsubst %.c, $(BUILDDIR)/%.o, $(SOURCES))
 
 INCLUDES := $(patsubst %, -I%, $(INCLUDEDIR) $(SRCDIR)) $(shell pkg-config --cflags-only-I $(LIBRARIES))
-CFLAGS   := -g -Wall $(shell pkg-config --cflags-only-other $(LIBRARIES))
+CFLAGS   := -g -Wall -pedantic -Wno-variadic-macros $(shell pkg-config --cflags-only-other $(LIBRARIES))
 LDFLAGS  := $(shell pkg-config --libs $(LIBRARIES))
 
 

@@ -76,7 +76,7 @@ static GElf_Word pltLookupVal(ElfuElf *me, char *name)
        * from the start of the PLT, where j is the PLT entry and 16 is
        * the number of bytes the machine code in a PLT entry take. */
       GElf_Addr addr = plt->shdr.sh_addr + (16 * j);
-      ELFU_DEBUG("dynsymLookupVal: Guessing symbol '%s' is in destination memory at %jx (PLT entry #%d).\n", name, addr, j);
+      ELFU_DEBUG("dynsymLookupVal: Guessing symbol '%s' is in destination memory at %x (PLT entry #%u).\n", name, (unsigned)addr, j);
       return addr;
     }
   }
@@ -215,7 +215,7 @@ void elfu_mSymtabFlatten(ElfuElf *me)
       i++;
     }
   } else {
-    // Unknown elfclass
+    /* Unknown elfclass */
     assert(0);
   }
 

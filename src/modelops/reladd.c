@@ -7,7 +7,7 @@
 
 static int appendData(ElfuScn *ms, void *buf, size_t len)
 {
-  void *newbuf;
+  char *newbuf;
 
   assert(ms);
   assert(ms->shdr.sh_type != SHT_NOBITS);
@@ -67,9 +67,9 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
       goto ERROR;
     }
 
-    ELFU_INFO("Inserting %s at address 0x%jx...\n",
+    ELFU_INFO("Inserting %s at address 0x%x...\n",
               elfu_mScnName(mrel, oldscn),
-              injAddr);
+              (unsigned)injAddr);
 
     injOffset = injAddr - injPhdr->phdr.p_vaddr + injPhdr->phdr.p_offset;
 
@@ -120,10 +120,10 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
 
     return newscn;
   } else {
-      ELFU_WARN("insertSection: Skipping non-memory section %s (type %d flags %jd).\n",
+      ELFU_WARN("insertSection: Skipping non-memory section %s (type %d flags %u).\n",
                 elfu_mScnName(mrel, oldscn),
                 oldscn->shdr.sh_type,
-                oldscn->shdr.sh_flags);
+                (unsigned)oldscn->shdr.sh_flags);
       goto ERROR;
   }
 
@@ -137,10 +137,10 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
 
 static void* subScnAdd1(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
 {
-  (void)aux2;
-  ElfuElf *me = (ElfuElf*)aux1;
-
   ElfuScn *newscn;
+  ElfuElf *me = (ElfuElf*)aux1;
+  (void)aux2;
+
 
   switch(ms->shdr.sh_type) {
     case SHT_PROGBITS: /* 1 */
@@ -166,9 +166,8 @@ static void* subScnAdd1(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
 
 static void* subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
 {
-  (void)aux2;
   ElfuElf *me = (ElfuElf*)aux1;
-  (void)me;
+  (void)aux2;
 
   switch(ms->shdr.sh_type) {
     case SHT_NULL: /* 0 */
@@ -217,7 +216,7 @@ static void* subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
 static void insertSymClone(ElfuElf *me, const ElfuScn *oldmsst, const ElfuSym *oldsym)
 {
   GElf_Xword newsize;
-  void *newbuf;
+  char *newbuf;
   ElfuScn *newscn = NULL;
   ElfuSym *newsym;
   char *oldsymname;
