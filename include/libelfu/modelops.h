@@ -11,6 +11,7 @@
 
 
 GElf_Word elfu_mSymtabLookupVal(ElfuElf *me, ElfuScn *msst, GElf_Word entry);
+GElf_Word elfu_mSymtabLookupAddrByName(ElfuElf *me, ElfuScn *msst, char *name);
 void elfu_mSymtabFlatten(ElfuElf *me);
 
 
@@ -53,5 +54,7 @@ ElfuElf* elfu_mFromElf(Elf *e);
     void elfu_mToElf(ElfuElf *me, Elf *e);
 
 void elfu_mReladd(ElfuElf *me, const ElfuElf *mrel);
+
+void elfu_mDetour(ElfuElf *me, GElf_Addr from, GElf_Addr to);
 
 #endif

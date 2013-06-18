@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <getopt.h>
 #include <libelfu/libelfu.h>
 
@@ -19,6 +20,7 @@ static void printUsage(char *progname)
          "  -c, --check                    Do a few sanity checks and print any errors\n"
          "  -d, --dump                     Dump current model state (debug only)\n"
          "      --reladd        obj.o      Insert object file contents\n"
+         "      --detour        from,to    Write a jump to <to> at <from>\n"
          "  -o, --output        outfile    Where to write the modified ELF file to\n"
          "\n");
 }
@@ -42,6 +44,7 @@ int main(int argc, char **argv)
     {"input", 1, 0, 'i'},
     {"output", 1, 0, 'o'},
     {"reladd", 1, 0, 10001},
+    {"detour", 1, 0, 10002},
     {NULL, 0, NULL, 0}
   };
 
@@ -146,6 +149,41 @@ int main(int argc, char **argv)
             elfu_mReladd(me, mrel);
             printf("--reladd: Injected %s.\n", optarg);
           }
+        }
+        break;
+      case 10002:
+        if (!me) {
+          goto ERR_NO_INPUT;
+        } else {
+          GElf_Addr from;
+          GElf_Addr to;
+          char *second;
+
+          strtok_r(optarg, ",", &second);
+          printf("--detour: From '%s' to '%s'\n", optarg, second);
+
+
+          from = strtoul(optarg, NULL, 0);
+          if (from == 0) {
+            from = elfu_mSymtabLookupAddrByName(me, me->symtab, optarg);
+          }
+          if (from == 0) {
+            printf("--detour: Cannot parse argument 1, aborting.\n");
+            goto ERR;
+          }
+          printf("--detour: From %x\n", (unsigned)from);
+
+          to = strtoul(second, NULL, 0);
+          if (to == 0) {
+            to = elfu_mSymtabLookupAddrByName(me, me->symtab, second);
+          }
+          if (to == 0) {
+            printf("--detour: Cannot parse argument 2, aborting.\n");
+            goto ERR;
+          }
+          printf("--detour: To %x\n", (unsigned)to);
+
+          elfu_mDetour(me, from, to);
         }
         break;
       case '?':

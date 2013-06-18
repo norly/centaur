@@ -141,6 +141,52 @@ GElf_Word elfu_mSymtabLookupVal(ElfuElf *me, ElfuScn *msst, GElf_Word entry)
 }
 
 
+/* Look up a value in the symbol table section *msst which is in *me. */
+GElf_Word elfu_mSymtabLookupAddrByName(ElfuElf *me, ElfuScn *msst, char *name)
+{
+  ElfuSym *sym;
+
+  assert(me);
+  assert(msst);
+  assert(name);
+  assert(strlen(name) > 0);
+  assert(!CIRCLEQ_EMPTY(&msst->symtab.syms));
+
+  CIRCLEQ_FOREACH(sym, &msst->symtab.syms, elem) {
+    char *symname = ELFU_SYMSTR(msst, sym->name);
+
+    if (!strcmp(symname, name)) {
+      goto SYMBOL_FOUND;
+    }
+  }
+  return 0;
+
+
+  SYMBOL_FOUND:
+
+  switch (sym->type) {
+    case STT_NOTYPE:
+    case STT_OBJECT:
+    case STT_FUNC:
+      if (sym->scnptr) {
+        GElf_Addr a = sym->value;
+        a += me->ehdr.e_type == ET_REL ? sym->scnptr->shdr.sh_addr : 0;
+        return a;
+      } else if (sym->shndx == SHN_UNDEF) {
+        return 0;
+      } else if (sym->shndx == SHN_ABS) {
+        return sym->value;
+      } else {
+        ELFU_WARN("elfu_mSymtabLookupAddrByName: Symbol binding COMMON is not supported, using 0.\n");
+        return 0;
+      }
+      break;
+    default:
+      return 0;
+  }
+}
+
+
 
 /* Convert symtab from memory model to elfclass specific format */
 void elfu_mSymtabFlatten(ElfuElf *me)
