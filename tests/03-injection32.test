@@ -1,0 +1,11 @@
+#!/bin/sh
+source ./boilerplate.sh
+
+elfucli --input reference/putsmain32 \
+        --reladd reference/puts-alternative32.o \
+        --output $BUILDDIR/putsmain32-with-puts-alternative32
+test_check_retval
+
+cmp reference/putsmain32-with-puts-alternative32 \
+    $BUILDDIR/putsmain32-with-puts-alternative32
+test_check_retval

@@ -1,0 +1,10 @@
+#!/bin/sh
+source ./boilerplate.sh
+
+elfucli --input $BUILDDIR/putsmain \
+        --reladd $BUILDDIR/data256mb.o \
+        --output $BUILDDIR/putsmain-with-data256mb
+test_check_retval
+
+$BUILDDIR/putsmain-with-data256mb | grep -q "puts() #2 called in main()"
+test_check_retval

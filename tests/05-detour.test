@@ -1,0 +1,11 @@
+#!/bin/sh
+source ./boilerplate.sh
+
+elfucli --input $BUILDDIR/putsmainsub \
+        --reladd $BUILDDIR/puts_noarg.o \
+        --detour sub,puts_noarg \
+        --output $BUILDDIR/putsmainsub-with-puts-noarg-detour
+test_check_retval
+
+$BUILDDIR/putsmainsub-with-puts-noarg-detour | grep -q "puts_noarg() is returning."
+test_check_retval
