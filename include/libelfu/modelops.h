@@ -18,8 +18,9 @@ void elfu_mSymtabFlatten(ElfuElf *me);
 void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);
 
 
-size_t elfu_mPhdrCount(ElfuElf *me);
-void elfu_mPhdrUpdateChildOffsets(ElfuPhdr *mp);
+   size_t elfu_mPhdrCount(ElfuElf *me);
+     void elfu_mPhdrUpdateChildOffsets(ElfuPhdr *mp);
+ElfuPhdr* elfu_mPhdrAlloc();
 
 
 typedef void* (SectionHandlerFunc)(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2);
@@ -29,7 +30,7 @@ typedef void* (SectionHandlerFunc)(ElfuElf *me, ElfuScn *ms, void *aux1, void *a
  ElfuScn* elfu_mScnByOldscn(ElfuElf *me, ElfuScn *oldscn);
     char* elfu_mScnName(ElfuElf *me, ElfuScn *ms);
 ElfuScn** elfu_mScnSortedByOffset(ElfuElf *me, size_t *count);
-ElfuScn* elfu_mScnAlloc();
+ ElfuScn* elfu_mScnAlloc();
 
 
 GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,

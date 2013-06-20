@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 #include <libelfu/libelfu.h>
 
 
@@ -33,4 +35,28 @@ void elfu_mPhdrUpdateChildOffsets(ElfuPhdr *mp)
   CIRCLEQ_FOREACH(ms, &mp->childScnList, elemChildScn) {
     ms->shdr.sh_offset = mp->phdr.p_offset + (ms->shdr.sh_addr - mp->phdr.p_vaddr);
   }
+}
+
+
+
+/*
+ * Allocation, destruction
+ */
+
+ElfuPhdr* elfu_mPhdrAlloc()
+{
+  ElfuPhdr *mp;
+
+  mp = malloc(sizeof(ElfuPhdr));
+  if (!mp) {
+    ELFU_WARN("mPhdrAlloc: malloc() failed for ElfuPhdr.\n");
+    return NULL;
+  }
+
+  memset(mp, 0, sizeof(*mp));
+
+  CIRCLEQ_INIT(&mp->childScnList);
+  CIRCLEQ_INIT(&mp->childPhdrList);
+
+  return mp;
 }

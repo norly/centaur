@@ -185,16 +185,12 @@ static ElfuPhdr* modelFromPhdr(GElf_Phdr *phdr)
 
   assert(phdr);
 
-  mp = malloc(sizeof(ElfuPhdr));
+  mp = elfu_mPhdrAlloc();
   if (!mp) {
-    ELFU_WARN("modelFromPhdr: malloc() failed for ElfuPhdr.\n");
     return NULL;
   }
 
   mp->phdr = *phdr;
-
-  CIRCLEQ_INIT(&mp->childScnList);
-  CIRCLEQ_INIT(&mp->childPhdrList);
 
   return mp;
 }
