@@ -1,4 +1,5 @@
-PROJ := elfucli
+LIBNAME := elfu
+EXENAME := elfucli
 
 LIBRARIES := libelf
 
@@ -6,21 +7,31 @@ BUILDDIR   := build
 INCLUDEDIR := include
 SRCDIR     := src
 
-EXE     := $(BUILDDIR)/$(PROJ)
+EXE       := $(BUILDDIR)/$(EXENAME)
+STATICLIB := $(BUILDDIR)/lib$(LIBNAME).a
+
+SHARED_VERMAJ := 0
+SHARED_VERMIN := 0
+SHARED_VERREV := 0
+SHAREDLIB     := $(BUILDDIR)/lib$(LIBNAME).so.$(SHARED_VERMAJ).$(SHARED_VERMIN).$(SHARED_VERREV)
+
 HEADERS := $(shell find $(INCLUDEDIR)/ -iname "*.h")
 HEADERS += $(shell find $(SRCDIR)/ -iname "*.h")
 
-SOURCES := $(shell find $(SRCDIR)/ -iname "*.c")
-OBJS    := $(patsubst %.c, $(BUILDDIR)/%.o, $(SOURCES))
+ALLSRCS := $(shell find $(SRCDIR)/ -iname "*.c")
+LIBSRCS := $(filter $(SRCDIR)/lib$(LIBNAME)/%.c, $(ALLSRCS))
+EXESRCS := $(filter-out $(SRCDIR)/lib$(LIBNAME)/%.c, $(ALLSRCS))
+LIBOBJS := $(patsubst %.c, $(BUILDDIR)/%.o, $(LIBSRCS))
+EXEOBJS := $(patsubst %.c, $(BUILDDIR)/%.o, $(EXESRCS))
 
 INCLUDES := $(patsubst %, -I%, $(INCLUDEDIR) $(SRCDIR)) $(shell pkg-config --cflags-only-I $(LIBRARIES))
-CFLAGS   := -g -Wall -pedantic -Wno-variadic-macros $(shell pkg-config --cflags-only-other $(LIBRARIES))
+CFLAGS   := -g -Wall -pedantic -Wno-variadic-macros -fPIC $(shell pkg-config --cflags-only-other $(LIBRARIES))
 LDFLAGS  := $(shell pkg-config --libs $(LIBRARIES))
 
 
 
-.PHONY: default
-default: $(EXE)
+.PHONY: all
+all: $(STATICLIB) $(SHAREDLIB) $(EXE)
 
 
 .PHONY: check
@@ -30,13 +41,17 @@ check: $(EXE)
 
 .PHONY: debug
 debug: $(EXE)
-	gdb $(EXE) $(shell ps -e | sed "s/^ *\([0-9]\+\) .*$(PROJ).*$$/\1/g;te;d;:e")
+	gdb $(EXE) $(shell ps -e | sed "s/^ *\([0-9]\+\) .*$(EXENAME).*$$/\1/g;te;d;:e")
 
 
-$(EXE): $(OBJS)
-	@if [ ! -d $(BUILDDIR) ] ; then echo "Error: Build dir '$(BUILDDIR)' does not exist." ; false ; fi
+$(EXE): $(EXEOBJS) $(STATICLIB)
 	gcc -o $@ $^ $(LDFLAGS)
 
+$(SHAREDLIB): $(LIBOBJS)
+	gcc -shared -Wl,-soname,lib$(LIBNAME).so.$(SHARED_VERMAJ) -o $@ $^ $(LDFLAGS)
+
+$(STATICLIB): $(LIBOBJS)
+	ar rcs $@ $^
 
 $(BUILDDIR)/$(SRCDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
 	@if [ ! -d $(dir $@) ] ; then mkdir -p $(dir $@) ; fi
@@ -45,9 +60,6 @@ $(BUILDDIR)/$(SRCDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
 
 .PHONY: clean
 clean:
-	rm -f $(STATICLIB)
-	rm -f $(OBJS)
-	rm -f $(TESTEXES)
 	rm -rf $(BUILDDIR)/
 	make -C tests clean
 
