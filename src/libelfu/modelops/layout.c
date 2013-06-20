@@ -121,20 +121,14 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
         if (ms->shdr.sh_offset == endOff) {
           assert(ms->shdr.sh_type == SHT_NOBITS);
           assert(ms->shdr.sh_size == nobitsize);
-          ms->data.d_buf = malloc(ms->shdr.sh_size);
-          memset(ms->data.d_buf, '\0', ms->shdr.sh_size);
-          if (!ms->data.d_buf) {
+          ms->databuf = malloc(ms->shdr.sh_size);
+          memset(ms->databuf, '\0', ms->shdr.sh_size);
+          if (!ms->databuf) {
             ELFU_WARN("mExpandNobits: Could not allocate %u bytes for NOBITS expansion. Data may be inconsistent.\n",
                       (unsigned)ms->shdr.sh_size);
             assert(0);
             goto ERROR;
           }
-
-          ms->data.d_align = 1;
-          ms->data.d_off  = 0;
-          ms->data.d_type = ELF_T_BYTE;
-          ms->data.d_size = ms->shdr.sh_size;
-          ms->data.d_version = elf_version(EV_NONE);
 
           ms->shdr.sh_type = SHT_PROGBITS;
           ms->shdr.sh_addr = endAddr;

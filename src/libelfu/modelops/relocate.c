@@ -18,8 +18,8 @@ void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt)
              (unsigned)mstarget->shdr.sh_size);
 
   CIRCLEQ_FOREACH(rel, &msrt->reltab.rels, elem) {
-    Elf32_Word *dest32 = (Elf32_Word*)(((char*)(mstarget->data.d_buf)) + rel->offset);
-    Elf64_Word *dest64 = (Elf64_Word*)(((char*)(mstarget->data.d_buf)) + rel->offset);
+    Elf32_Word *dest32 = (Elf32_Word*)(mstarget->databuf + rel->offset);
+    Elf64_Word *dest64 = (Elf64_Word*)(mstarget->databuf + rel->offset);
 
 
     if (metarget->elfclass == ELFCLASS32) {

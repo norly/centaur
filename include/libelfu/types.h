@@ -58,10 +58,9 @@ typedef struct ElfuReltab {
 typedef struct ElfuScn {
   GElf_Shdr shdr;
 
-  Elf_Data data;
-
   struct ElfuScn *linkptr;
   struct ElfuScn *infoptr;
+  char *databuf;
 
   struct ElfuScn *oldptr;
 

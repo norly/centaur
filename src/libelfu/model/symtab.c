@@ -210,19 +210,18 @@ void elfu_mSymtabFlatten(ElfuElf *me)
     size_t newsize = (numsyms + 1) * sizeof(Elf32_Sym);
     size_t i;
 
-    if (me->symtab->data.d_buf) {
-      free(me->symtab->data.d_buf);
+    if (me->symtab->databuf) {
+      free(me->symtab->databuf);
     }
-    me->symtab->data.d_buf = malloc(newsize);
-    assert(me->symtab->data.d_buf);
+    me->symtab->databuf = malloc(newsize);
+    assert(me->symtab->databuf);
 
-    me->symtab->data.d_size = newsize;
     me->symtab->shdr.sh_size = newsize;
-    memset(me->symtab->data.d_buf, 0, newsize);
+    memset(me->symtab->databuf, 0, newsize);
 
     i = 1;
     CIRCLEQ_FOREACH(sym, &me->symtab->symtab.syms, elem) {
-      Elf32_Sym *es = ((Elf32_Sym*)me->symtab->data.d_buf) + i;
+      Elf32_Sym *es = ((Elf32_Sym*)me->symtab->databuf) + i;
 
       es->st_name = sym->name;
       es->st_value = sym->value;
@@ -237,19 +236,18 @@ void elfu_mSymtabFlatten(ElfuElf *me)
     size_t newsize = (numsyms + 1) * sizeof(Elf64_Sym);
     size_t i;
 
-    if (me->symtab->data.d_buf) {
-      free(me->symtab->data.d_buf);
+    if (me->symtab->databuf) {
+      free(me->symtab->databuf);
     }
-    me->symtab->data.d_buf = malloc(newsize);
-    assert(me->symtab->data.d_buf);
+    me->symtab->databuf = malloc(newsize);
+    assert(me->symtab->databuf);
 
-    me->symtab->data.d_size = newsize;
     me->symtab->shdr.sh_size = newsize;
-    memset(me->symtab->data.d_buf, 0, newsize);
+    memset(me->symtab->databuf, 0, newsize);
 
     i = 1;
     CIRCLEQ_FOREACH(sym, &me->symtab->symtab.syms, elem) {
-      Elf64_Sym *es = ((Elf64_Sym*)me->symtab->data.d_buf) + i;
+      Elf64_Sym *es = ((Elf64_Sym*)me->symtab->databuf) + i;
 
       es->st_name = sym->name;
       es->st_value = sym->value;

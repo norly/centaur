@@ -59,18 +59,18 @@ static void* modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 
 
   /* Data */
-  if (ms->data.d_buf) {
+  if (ms->databuf) {
     Elf_Data *dataOut = elf_newdata(scnOut);
     if (!dataOut) {
       ELFU_WARNELF("elf_newdata");
     }
 
-    dataOut->d_align = ms->data.d_align;
-    dataOut->d_buf  = ms->data.d_buf;
-    dataOut->d_off  = ms->data.d_off;
-    dataOut->d_type = ms->data.d_type;
-    dataOut->d_size = ms->data.d_size;
-    dataOut->d_version = ms->data.d_version;
+    dataOut->d_align = 1;
+    dataOut->d_buf  = ms->databuf;
+    dataOut->d_off  = 0;
+    dataOut->d_type = ELF_T_BYTE;
+    dataOut->d_size = ms->shdr.sh_size;
+    dataOut->d_version = elf_version(EV_NONE);
   }
 
   return NULL;

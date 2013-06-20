@@ -7,7 +7,7 @@
 #include <libelfu/types.h>
 
 
-#define ELFU_SYMSTR(symtabscn, off) (((char*)(symtabscn)->linkptr->data.d_buf) + (off))
+#define ELFU_SYMSTR(symtabscn, off) ((symtabscn)->linkptr->databuf + (off))
 
 
 GElf_Word elfu_mSymtabLookupVal(ElfuElf *me, ElfuScn *msst, GElf_Word entry);
@@ -29,6 +29,7 @@ typedef void* (SectionHandlerFunc)(ElfuElf *me, ElfuScn *ms, void *aux1, void *a
  ElfuScn* elfu_mScnByOldscn(ElfuElf *me, ElfuScn *oldscn);
     char* elfu_mScnName(ElfuElf *me, ElfuScn *ms);
 ElfuScn** elfu_mScnSortedByOffset(ElfuElf *me, size_t *count);
+ElfuScn* elfu_mScnAlloc();
 
 
 GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,

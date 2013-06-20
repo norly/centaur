@@ -9,33 +9,27 @@ ElfuScn* elfu_mCloneScn(ElfuScn *ms)
 
   assert(ms);
 
-  newscn = malloc(sizeof(ElfuScn));
+  newscn = elfu_mScnAlloc();
   if (!newscn) {
     ELFU_WARN("elfu_nCloneScn: Could not allocate memory for new ElfuScn.\n");
     return NULL;
   }
 
   newscn->shdr = ms->shdr;
-  newscn->data = ms->data;
-  if (ms->data.d_buf) {
-    void *newbuf = malloc(ms->data.d_size);
+
+  if (ms->databuf) {
+    void *newbuf = malloc(ms->shdr.sh_size);
     if (!newbuf) {
       ELFU_WARN("elfu_nCloneScn: Could not allocate memory for new data buffer.\n");
       free(newscn);
       return NULL;
     }
 
-    memcpy(newbuf, ms->data.d_buf, ms->data.d_size);
-    newscn->data.d_buf = newbuf;
+    memcpy(newbuf, ms->databuf, ms->shdr.sh_size);
+    newscn->databuf = newbuf;
   }
 
-  newscn->linkptr = NULL;
-  newscn->infoptr = NULL;
-
   newscn->oldptr = ms;
-
-  CIRCLEQ_INIT(&ms->symtab.syms);
-  CIRCLEQ_INIT(&ms->reltab.rels);
 
   return newscn;
 }

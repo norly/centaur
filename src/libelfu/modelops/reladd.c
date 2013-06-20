@@ -11,19 +11,18 @@ static int appendData(ElfuScn *ms, void *buf, size_t len)
 
   assert(ms);
   assert(ms->shdr.sh_type != SHT_NOBITS);
-  assert(ms->data.d_buf);
+  assert(ms->databuf);
 
-  newbuf = realloc(ms->data.d_buf, ms->shdr.sh_size + len);
+  newbuf = realloc(ms->databuf, ms->shdr.sh_size + len);
   if (!newbuf) {
     ELFU_WARN("appendData: malloc() failed for newbuf.\n");
     return 1;
   }
 
-  ms->data.d_buf = newbuf;
+  ms->databuf = newbuf;
   memcpy(newbuf + ms->shdr.sh_size, buf, len);
   ms->shdr.sh_size += len;
-  ms->data.d_size += len;
-  assert(ms->shdr.sh_size == ms->data.d_size);
+  assert(ms->shdr.sh_size == ms->shdr.sh_size);
 
   return 0;
 }
@@ -45,13 +44,12 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
     if (newscn->shdr.sh_type == SHT_NOBITS) {
       /* Expand this to SHT_PROGBITS, then insert as such. */
 
-      assert(!newscn->data.d_buf);
+      assert(!newscn->databuf);
 
-      newscn->data.d_buf = malloc(newscn->shdr.sh_size);
-      if (!newscn->data.d_buf) {
+      newscn->databuf = malloc(newscn->shdr.sh_size);
+      if (!newscn->databuf) {
         goto ERROR;
       }
-      newscn->data.d_size = newscn->shdr.sh_size;
       newscn->shdr.sh_type = SHT_PROGBITS;
     }
 
@@ -250,19 +248,18 @@ static void insertSymClone(ElfuElf *me, const ElfuScn *oldmsst, const ElfuSym *o
 
   /* Expand .strtab, append symbol name, link newsym to it */
   newsize = me->symtab->linkptr->shdr.sh_size + strlen(oldsymname) + 1;
-  newbuf = realloc(me->symtab->linkptr->data.d_buf, newsize);
+  newbuf = realloc(me->symtab->linkptr->databuf, newsize);
   if (!newbuf) {
     ELFU_WARN("insertSymClone: realloc() failed for strtab.\n");
     goto ERROR;
   }
 
-  me->symtab->linkptr->data.d_buf = newbuf;
+  me->symtab->linkptr->databuf = newbuf;
 
   newsym->name = me->symtab->linkptr->shdr.sh_size;
 
   strcpy(newbuf + newsym->name, oldsymname);
 
-  me->symtab->linkptr->data.d_size = newsize;
   me->symtab->linkptr->shdr.sh_size = newsize;
 
 

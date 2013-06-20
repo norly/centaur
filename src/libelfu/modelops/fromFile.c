@@ -11,13 +11,13 @@ static void parseSymtab(ElfuElf *me, ElfuScn *ms, ElfuScn**origScnArr)
   size_t i;
 
   assert(ms);
-  assert(ms->data.d_buf);
+  assert(ms->databuf);
   assert(origScnArr);
 
   /* Parse symbols from their elfclass-specific format */
   if (me->elfclass == ELFCLASS32) {
     for (i = 1; (i + 1) * sizeof(Elf32_Sym) <= ms->shdr.sh_size; i++) {
-      Elf32_Sym *cursym = ((Elf32_Sym*)ms->data.d_buf) + i;
+      Elf32_Sym *cursym = ((Elf32_Sym*)ms->databuf) + i;
       ElfuSym *newsym = malloc(sizeof(*sym));
       assert(newsym);
 
@@ -29,13 +29,11 @@ static void parseSymtab(ElfuElf *me, ElfuScn *ms, ElfuScn**origScnArr)
       newsym->other = cursym->st_other;
       newsym->shndx = cursym->st_shndx;
 
-
-
       CIRCLEQ_INSERT_TAIL(&ms->symtab.syms, newsym, elem);
     }
   } else if (me->elfclass == ELFCLASS64) {
     for (i = 1; (i + 1) * sizeof(Elf64_Sym) <= ms->shdr.sh_size; i++) {
-      Elf64_Sym *cursym = ((Elf64_Sym*)ms->data.d_buf) + i;
+      Elf64_Sym *cursym = ((Elf64_Sym*)ms->databuf) + i;
       ElfuSym *newsym = malloc(sizeof(*sym));
       assert(newsym);
 
@@ -46,8 +44,6 @@ static void parseSymtab(ElfuElf *me, ElfuScn *ms, ElfuScn**origScnArr)
       newsym->type = ELF64_ST_TYPE(cursym->st_info);
       newsym->other = cursym->st_other;
       newsym->shndx = cursym->st_shndx;
-
-
 
       CIRCLEQ_INSERT_TAIL(&ms->symtab.syms, newsym, elem);
     }
@@ -77,11 +73,11 @@ static void parseReltab32(ElfuScn *ms)
   size_t i;
 
   assert(ms);
-  assert(ms->data.d_buf);
+  assert(ms->databuf);
 
 
   for (i = 0; (i + 1) * sizeof(Elf32_Rel) <= ms->shdr.sh_size; i++) {
-    Elf32_Rel *currel = &(((Elf32_Rel*)ms->data.d_buf)[i]);
+    Elf32_Rel *currel = &(((Elf32_Rel*)ms->databuf)[i]);
     ElfuRel *rel;
 
     rel = malloc(sizeof(*rel));
@@ -103,11 +99,11 @@ static void parseRelatab64(ElfuScn *ms)
   size_t i;
 
   assert(ms);
-  assert(ms->data.d_buf);
+  assert(ms->databuf);
 
 
   for (i = 0; (i + 1) * sizeof(Elf64_Rela) <= ms->shdr.sh_size; i++) {
-    Elf64_Rela *currel = &(((Elf64_Rela*)ms->data.d_buf)[i]);
+    Elf64_Rela *currel = &(((Elf64_Rela*)ms->databuf)[i]);
     ElfuRel *rel;
 
     rel = malloc(sizeof(*rel));
@@ -210,29 +206,20 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 
   assert(scn);
 
-  ms = malloc(sizeof(ElfuScn));
+  ms = elfu_mScnAlloc();
   if (!ms) {
-    ELFU_WARN("modelFromSection: malloc() failed for ElfuScn.\n");
     goto ERROR;
   }
 
-
+  /* Copy SHDR */
   assert(gelf_getshdr(scn, &ms->shdr) == &ms->shdr);
 
-
   /* Copy each data part in source segment */
-  ms->data.d_align = 1;
-  ms->data.d_buf  = NULL;
-  ms->data.d_off  = 0;
-  ms->data.d_type = ELF_T_BYTE;
-  ms->data.d_size = ms->shdr.sh_size;
-  ms->data.d_version = elf_version(EV_NONE);
-  if (ms->shdr.sh_type != SHT_NOBITS
-      && ms->shdr.sh_size > 0) {
+  if (SCNFILESIZE(&ms->shdr) > 0) {
     Elf_Data *data;
 
-    ms->data.d_buf = malloc(ms->shdr.sh_size);
-    if (!ms->data.d_buf) {
+    ms->databuf = malloc(ms->shdr.sh_size);
+    if (!ms->databuf) {
       ELFU_WARN("modelFromSection: malloc() failed for data buffer (%x bytes).\n", (unsigned)ms->shdr.sh_size);
       goto ERROR;
     }
@@ -241,29 +228,19 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
     data = elf_rawdata(scn, NULL);
     assert(data);
 
-    ms->data.d_align = data->d_align;
-    ms->data.d_type = data->d_type;
-    ms->data.d_version = data->d_version;
+    /* elf_rawdata() always returns ELF_T_BYTE */
+    assert(data->d_type == ELF_T_BYTE);
 
     while (data) {
       if (data->d_off + data->d_size > ms->shdr.sh_size) {
         ELFU_WARN("modelFromSection: libelf delivered a bogus data blob. Skipping\n");
       } else {
-        memcpy((char*)ms->data.d_buf + data->d_off, data->d_buf, data->d_size);
+        memcpy((char*)ms->databuf + data->d_off, data->d_buf, data->d_size);
       }
 
       data = elf_rawdata(scn, data);
     }
   }
-
-  ms->linkptr = NULL;
-  ms->infoptr = NULL;
-
-  ms->oldptr = NULL;
-
-  CIRCLEQ_INIT(&ms->symtab.syms);
-  CIRCLEQ_INIT(&ms->reltab.rels);
-
 
   return ms;
 

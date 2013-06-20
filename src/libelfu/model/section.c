@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <libelfu/libelfu.h>
 
 
@@ -124,11 +125,11 @@ char* elfu_mScnName(ElfuElf *me, ElfuScn *ms)
     return NULL;
   }
 
-  if (!me->shstrtab->data.d_buf) {
+  if (!me->shstrtab->databuf) {
     return NULL;
   }
 
-  return &((char*)me->shstrtab->data.d_buf)[ms->shdr.sh_name];
+  return &me->shstrtab->databuf[ms->shdr.sh_name];
 }
 
 
@@ -193,4 +194,28 @@ ElfuScn** elfu_mScnSortedByOffset(ElfuElf *me, size_t *count)
   *count = numSecs;
 
   return sortedSecs;
+}
+
+
+
+/*
+ * Allocation, destruction
+ */
+
+ElfuScn* elfu_mScnAlloc()
+{
+  ElfuScn *ms;
+
+  ms = malloc(sizeof(ElfuScn));
+  if (!ms) {
+    ELFU_WARN("mScnCreate: malloc() failed for ElfuScn.\n");
+    return NULL;
+  }
+
+  memset(ms, 0, sizeof(*ms));
+
+  CIRCLEQ_INIT(&ms->symtab.syms);
+  CIRCLEQ_INIT(&ms->reltab.rels);
+
+  return ms;
 }

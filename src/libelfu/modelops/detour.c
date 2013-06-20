@@ -47,5 +47,5 @@ void elfu_mDetour(ElfuElf *me, GElf_Addr from, GElf_Addr to)
              (unsigned)to);
 
   *(Elf32_Word*)(detourcode + 1) = to - from - 5;
-  memcpy((char*)ms->data.d_buf + scnoffset, detourcode, 5);
+  memcpy(ms->databuf + scnoffset, detourcode, 5);
 }

@@ -25,7 +25,7 @@ LIBOBJS := $(patsubst %.c, $(BUILDDIR)/%.o, $(LIBSRCS))
 EXEOBJS := $(patsubst %.c, $(BUILDDIR)/%.o, $(EXESRCS))
 
 INCLUDES := $(patsubst %, -I%, $(INCLUDEDIR) $(SRCDIR)) $(shell pkg-config --cflags-only-I $(LIBRARIES))
-CFLAGS   := -g -Wall -pedantic -Wno-variadic-macros -fPIC $(shell pkg-config --cflags-only-other $(LIBRARIES))
+CFLAGS   := -g -Wall -std=gnu99 -pedantic -fPIC $(shell pkg-config --cflags-only-other $(LIBRARIES))
 LDFLAGS  := $(shell pkg-config --libs $(LIBRARIES))
 
 
