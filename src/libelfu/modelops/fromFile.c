@@ -290,18 +290,10 @@ ElfuElf* elfu_mFromElf(Elf *e)
     goto ERROR;
   }
 
-  me = malloc(sizeof(ElfuElf));
+  me = elfu_mElfAlloc();
   if (!me) {
-    ELFU_WARN("elfu_mFromElf: malloc() failed for ElfuElf.\n");
     goto ERROR;
   }
-
-
-  /* General stuff */
-  CIRCLEQ_INIT(&me->phdrList);
-  CIRCLEQ_INIT(&me->orphanScnList);
-  me->shstrtab = NULL;
-  me->symtab = NULL;
 
   me->elfclass = gelf_getclass(e);
   assert(me->elfclass != ELFCLASSNONE);
@@ -473,7 +465,7 @@ ElfuElf* elfu_mFromElf(Elf *e)
     free(secArray);
   }
   if (me) {
-    // TODO: Free data structures
+    elfu_mElfDestroy(me);
   }
 
   ELFU_WARN("elfu_mFromElf: Failed to load file.\n");

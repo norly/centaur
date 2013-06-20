@@ -60,3 +60,22 @@ ElfuPhdr* elfu_mPhdrAlloc()
 
   return mp;
 }
+
+void elfu_mPhdrDestroy(ElfuPhdr* mp)
+{
+  ElfuPhdr *mp2;
+  ElfuScn *ms;
+
+  assert(mp);
+
+  CIRCLEQ_FOREACH(mp2, &mp->childPhdrList, elem) {
+    // TODO ?
+  }
+
+  CIRCLEQ_FOREACH(ms, &mp->childScnList, elem) {
+    CIRCLEQ_REMOVE(&mp->childScnList, ms, elem);
+    elfu_mScnDestroy(ms);
+  }
+
+  free(mp);
+}

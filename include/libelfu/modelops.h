@@ -21,6 +21,7 @@ void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);
    size_t elfu_mPhdrCount(ElfuElf *me);
      void elfu_mPhdrUpdateChildOffsets(ElfuPhdr *mp);
 ElfuPhdr* elfu_mPhdrAlloc();
+     void elfu_mPhdrDestroy(ElfuPhdr* mp);
 
 
 typedef void* (SectionHandlerFunc)(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2);
@@ -31,6 +32,11 @@ typedef void* (SectionHandlerFunc)(ElfuElf *me, ElfuScn *ms, void *aux1, void *a
     char* elfu_mScnName(ElfuElf *me, ElfuScn *ms);
 ElfuScn** elfu_mScnSortedByOffset(ElfuElf *me, size_t *count);
  ElfuScn* elfu_mScnAlloc();
+     void elfu_mScnDestroy(ElfuScn* ms);
+
+
+ElfuElf* elfu_mElfAlloc();
+    void elfu_mElfDestroy(ElfuElf* me);
 
 
 GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,

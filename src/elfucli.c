@@ -84,6 +84,10 @@ int main(int argc, char **argv)
         }
         break;
       case 'i':
+        if (me) {
+          elfu_mElfDestroy(me);
+        }
+
         printf("Opening input file %s.\n", optarg);
         openElf(&hIn, optarg, ELF_C_READ);
         if (!hIn.e) {
@@ -200,6 +204,10 @@ int main(int argc, char **argv)
 
 
 EXIT:
+  if (me) {
+    elfu_mElfDestroy(me);
+  }
+
   if (hIn.e) {
     closeElf(&hIn);
   }

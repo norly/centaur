@@ -219,3 +219,16 @@ ElfuScn* elfu_mScnAlloc()
 
   return ms;
 }
+
+void elfu_mScnDestroy(ElfuScn* ms)
+{
+  assert(ms);
+
+  // TODO: Free symtab/reltab
+
+  if (ms->databuf) {
+    free(ms->databuf);
+  }
+
+  free(ms);
+}
