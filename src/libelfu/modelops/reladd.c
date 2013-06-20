@@ -201,22 +201,16 @@ static void* subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
   switch(ms->shdr.sh_type) {
     case SHT_NULL: /* 0 */
     case SHT_PROGBITS: /* 1 */
+    case SHT_SYMTAB: /* 2 */
     case SHT_STRTAB: /* 3 */
     case SHT_NOBITS: /* 8 */
       break;
 
-
+    case SHT_RELA: /* 4 */
     case SHT_REL: /* 9 */
       /* Relocate. */
       elfu_mRelocate(me, elfu_mScnByOldscn(me, ms->infoptr), ms);
       break;
-
-    case SHT_RELA: /* 4 */
-      // TODO: Needs a parser
-      //elfu_mRelocate(elfu_mScnByOldscn(me, ms->infoptr), ms);
-
-    case SHT_SYMTAB: /* 2 */
-      /* Merge with the existing table. Take care of string tables also. */
 
     /* The next section types either do not occur in .o files, or are
      * not strictly necessary to process here. */
