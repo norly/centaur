@@ -68,54 +68,94 @@ static void parseSymtab(ElfuElf *me, ElfuScn *ms, ElfuScn**origScnArr)
 }
 
 
-static void parseReltab32(ElfuScn *ms)
+static void parseReltab(ElfuElf *me, ElfuScn *ms)
 {
   size_t i;
 
   assert(ms);
   assert(ms->databuf);
 
+  if (me->elfclass == ELFCLASS32) {
+    for (i = 0; (i + 1) * sizeof(Elf32_Rel) <= ms->shdr.sh_size; i++) {
+      Elf32_Rel *currel = &(((Elf32_Rel*)ms->databuf)[i]);
+      ElfuRel *rel;
 
-  for (i = 0; (i + 1) * sizeof(Elf32_Rel) <= ms->shdr.sh_size; i++) {
-    Elf32_Rel *currel = &(((Elf32_Rel*)ms->databuf)[i]);
-    ElfuRel *rel;
+      rel = malloc(sizeof(*rel));
+      assert(rel);
 
-    rel = malloc(sizeof(*rel));
-    assert(rel);
+      rel->offset = currel->r_offset;
+      rel->sym = ELF32_R_SYM(currel->r_info);
+      rel->type = ELF32_R_TYPE(currel->r_info);
+      rel->addendUsed = 0;
+      rel->addend = 0;
 
-    rel->offset = currel->r_offset;
-    rel->sym = ELF32_R_SYM(currel->r_info);
-    rel->type = ELF32_R_TYPE(currel->r_info);
-    rel->addendUsed = 0;
-    rel->addend = 0;
+      CIRCLEQ_INSERT_TAIL(&ms->reltab.rels, rel, elem);
+    }
+  } else if (me->elfclass == ELFCLASS64) {
+    for (i = 0; (i + 1) * sizeof(Elf64_Rel) <= ms->shdr.sh_size; i++) {
+      Elf64_Rel *currel = &(((Elf64_Rel*)ms->databuf)[i]);
+      ElfuRel *rel;
 
-    CIRCLEQ_INSERT_TAIL(&ms->reltab.rels, rel, elem);
+      rel = malloc(sizeof(*rel));
+      assert(rel);
+
+      rel->offset = currel->r_offset;
+      rel->sym = ELF64_R_SYM(currel->r_info);
+      rel->type = ELF64_R_TYPE(currel->r_info);
+      rel->addendUsed = 0;
+      rel->addend = 0;
+
+      CIRCLEQ_INSERT_TAIL(&ms->reltab.rels, rel, elem);
+    }
+  } else {
+    /* Unknown elfclass */
+    assert(0);
   }
 }
 
 
-static void parseRelatab64(ElfuScn *ms)
+static void parseRelatab(ElfuElf *me, ElfuScn *ms)
 {
   size_t i;
 
   assert(ms);
   assert(ms->databuf);
 
+  if (me->elfclass == ELFCLASS32) {
+    for (i = 0; (i + 1) * sizeof(Elf32_Rela) <= ms->shdr.sh_size; i++) {
+      Elf32_Rela *currel = &(((Elf32_Rela*)ms->databuf)[i]);
+      ElfuRel *rel;
 
-  for (i = 0; (i + 1) * sizeof(Elf64_Rela) <= ms->shdr.sh_size; i++) {
-    Elf64_Rela *currel = &(((Elf64_Rela*)ms->databuf)[i]);
-    ElfuRel *rel;
+      rel = malloc(sizeof(*rel));
+      assert(rel);
 
-    rel = malloc(sizeof(*rel));
-    assert(rel);
+      rel->offset = currel->r_offset;
+      rel->sym = ELF32_R_SYM(currel->r_info);
+      rel->type = ELF32_R_TYPE(currel->r_info);
+      rel->addendUsed = 1;
+      rel->addend = currel->r_addend;
 
-    rel->offset = currel->r_offset;
-    rel->sym = ELF64_R_SYM(currel->r_info);
-    rel->type = ELF64_R_TYPE(currel->r_info);
-    rel->addendUsed = 1;
-    rel->addend = currel->r_addend;
+      CIRCLEQ_INSERT_TAIL(&ms->reltab.rels, rel, elem);
+    }
+  } else if (me->elfclass == ELFCLASS64) {
+    for (i = 0; (i + 1) * sizeof(Elf64_Rela) <= ms->shdr.sh_size; i++) {
+      Elf64_Rela *currel = &(((Elf64_Rela*)ms->databuf)[i]);
+      ElfuRel *rel;
 
-    CIRCLEQ_INSERT_TAIL(&ms->reltab.rels, rel, elem);
+      rel = malloc(sizeof(*rel));
+      assert(rel);
+
+      rel->offset = currel->r_offset;
+      rel->sym = ELF64_R_SYM(currel->r_info);
+      rel->type = ELF64_R_TYPE(currel->r_info);
+      rel->addendUsed = 1;
+      rel->addend = currel->r_addend;
+
+      CIRCLEQ_INSERT_TAIL(&ms->reltab.rels, rel, elem);
+    }
+  } else {
+    /* Unknown elfclass */
+    assert(0);
   }
 }
 
@@ -161,18 +201,6 @@ static ElfuPhdr* parentPhdr(ElfuElf *me, ElfuScn *ms)
     if (PHDR_CONTAINS_SCN_IN_MEMORY(&mp->phdr, &ms->shdr)) {
       return mp;
     }
-
-    /* Give sections a second chance if they do not have any sh_addr
-     * at all. */
-    /* Actually we don't, because it's ambiguous.
-     * Re-enable for experiments with strangely-formatted files.
-    if (ms->shdr.sh_addr == 0
-        && PHDR_CONTAINS_SCN_IN_FILE(&mp->phdr, &ms->shdr)
-        && OFFS_END(ms->shdr.sh_offset, ms->shdr.sh_size)
-            <= OFFS_END(mp->phdr.p_offset, mp->phdr.p_memsz)) {
-      return mp;
-    }
-    */
   }
 
   return NULL;
@@ -394,26 +422,16 @@ ElfuElf* elfu_mFromElf(Elf *e)
     }
 
 
-    /* Parse relocations */
+    /* Parse relocations (needs sections in original order) */
     for (i = 0; i < numShdr - 1; i++) {
       ElfuScn *ms = secArray[i];
 
       switch (ms->shdr.sh_type) {
         case SHT_REL:
-          if (me->elfclass == ELFCLASS32) {
-            parseReltab32(ms);
-          } else if (me->elfclass == ELFCLASS64) {
-            /* Not used on x86-64 */
-            assert(0);
-          }
+          parseReltab(me, ms);
           break;
         case SHT_RELA:
-          if (me->elfclass == ELFCLASS32) {
-            /* Not used on x86-32 */
-            assert(0);
-          } else if (me->elfclass == ELFCLASS64) {
-            parseRelatab64(ms);
-          }
+          parseRelatab(me, ms);
           break;
       }
     }
