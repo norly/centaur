@@ -52,8 +52,6 @@ void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);
 
 int elfu_mCheck(ElfuElf *me);
 
-ElfuScn* elfu_mCloneScn(ElfuScn *ms);
-
 
 void elfu_mDumpPhdr(ElfuElf *me, ElfuPhdr *mp);
 void elfu_mDumpScn(ElfuElf *me, ElfuScn *ms);

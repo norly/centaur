@@ -5,6 +5,37 @@
 #include <libelfu/libelfu.h>
 
 
+static ElfuScn* cloneScn(ElfuScn *ms)
+{
+  ElfuScn *newscn;
+
+  assert(ms);
+
+  newscn = elfu_mScnAlloc();
+  if (!newscn) {
+    return NULL;
+  }
+
+  newscn->shdr = ms->shdr;
+
+  if (ms->databuf) {
+    void *newbuf = malloc(ms->shdr.sh_size);
+    if (!newbuf) {
+      ELFU_WARN("cloneScn: Could not allocate memory for new data buffer.\n");
+      free(newscn);
+      return NULL;
+    }
+
+    memcpy(newbuf, ms->databuf, ms->shdr.sh_size);
+    newscn->databuf = newbuf;
+  }
+
+  newscn->oldptr = ms;
+
+  return newscn;
+}
+
+
 static int appendData(ElfuScn *ms, void *buf, size_t len)
 {
   char *newbuf;
@@ -36,7 +67,7 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
   ElfuPhdr *injPhdr;
 
   if (oldscn->shdr.sh_flags & SHF_ALLOC) {
-    newscn = elfu_mCloneScn(oldscn);
+    newscn = cloneScn(oldscn);
     if (!newscn) {
       return NULL;
     }
