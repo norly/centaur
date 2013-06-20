@@ -18,6 +18,8 @@ void elfu_mSymtabFlatten(ElfuElf *me);
 void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);
 
 
+typedef void* (PhdrHandlerFunc)(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *aux2);
+    void* elfu_mPhdrForall(ElfuElf *me, PhdrHandlerFunc f, void *aux1, void *aux2);
    size_t elfu_mPhdrCount(ElfuElf *me);
      void elfu_mPhdrUpdateChildOffsets(ElfuPhdr *mp);
 ElfuPhdr* elfu_mPhdrAlloc();

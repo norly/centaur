@@ -340,6 +340,8 @@ ElfuElf* elfu_mFromElf(Elf *e)
 
         if (mp->phdr.p_vaddr <= mp2->phdr.p_vaddr
             && OFFS_END(mp2->phdr.p_vaddr, mp2->phdr.p_memsz) <= OFFS_END(mp->phdr.p_vaddr, mp->phdr.p_memsz)) {
+          /* Remove from the main list so only LOADs remain there */
+          CIRCLEQ_REMOVE(&me->phdrList, mp2, elem);
           CIRCLEQ_INSERT_TAIL(&mp->childPhdrList, mp2, elemChildPhdr);
         }
       }

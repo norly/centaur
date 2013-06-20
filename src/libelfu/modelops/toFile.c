@@ -4,32 +4,20 @@
 #include <libelfu/libelfu.h>
 
 
-static void modelToPhdrs(ElfuElf *me, Elf *e)
+static void* modelToPhdr(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *aux2)
 {
-  ElfuPhdr *mp;
-  size_t i;
+  size_t *i = (size_t*)aux1;
+  Elf *e = (Elf*)aux2;
 
-  /* Count PHDRs */
-  i = 0;
-  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
-    i++;
+  if (!gelf_update_phdr (e, *i, &mp->phdr)) {
+    ELFU_WARNELF("gelf_update_phdr");
   }
 
-  if (!gelf_newphdr(e, i)) {
-    ELFU_WARNELF("gelf_newphdr");
-  }
+  *i += 1;
 
-  /* Copy PHDRs */
-  i = 0;
-  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
-    if (!gelf_update_phdr (e, i, &mp->phdr)) {
-      ELFU_WARNELF("gelf_update_phdr");
-    }
-
-    i++;
-  }
+  /* Continue */
+  return NULL;
 }
-
 
 
 static void* modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
@@ -82,6 +70,8 @@ static void* modelToSection(ElfuElf *me, ElfuScn *ms, void *aux1, void *aux2)
 
 void elfu_mToElf(ElfuElf *me, Elf *e)
 {
+  size_t i = 0;
+
   if (me->symtab) {
     elfu_mSymtabFlatten(me);
   }
@@ -114,8 +104,13 @@ void elfu_mToElf(ElfuElf *me, Elf *e)
 
 
   /* PHDRs */
-  modelToPhdrs(me, e);
+  if (!gelf_newphdr(e, elfu_mPhdrCount(me))) {
+    ELFU_WARNELF("gelf_newphdr");
+  }
+
+  elfu_mPhdrForall(me, modelToPhdr, &i, e);
 
 
+  /* Done */
   elf_flagelf(e, ELF_C_SET, ELF_F_DIRTY);
 }

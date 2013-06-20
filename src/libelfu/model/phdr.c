@@ -4,21 +4,61 @@
 #include <libelfu/libelfu.h>
 
 
-size_t elfu_mPhdrCount(ElfuElf *me)
+/* Meta-functions */
+
+void* elfu_mPhdrForall(ElfuElf *me, PhdrHandlerFunc f, void *aux1, void *aux2)
 {
   ElfuPhdr *mp;
+
+  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
+    ElfuPhdr *mp2;
+    void *rv = f(me, mp, aux1, aux2);
+    if (rv) {
+      return rv;
+    }
+
+    CIRCLEQ_FOREACH(mp2, &mp->childPhdrList, elemChildPhdr) {
+      void *rv = f(me, mp2, aux1, aux2);
+      if (rv) {
+        return rv;
+      }
+    }
+  }
+
+  return NULL;
+}
+
+
+
+
+/* Counting */
+
+static void* subCounter(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *aux2)
+{
+  size_t *i = (size_t*)aux1;
+  (void)aux2;
+
+  *i += 1;
+
+  /* Continue */
+  return NULL;
+}
+
+
+size_t elfu_mPhdrCount(ElfuElf *me)
+{
   size_t i = 0;
 
   assert(me);
 
-  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
-    i++;
-  }
+  elfu_mPhdrForall(me, subCounter, &i, NULL);
 
   return i;
 }
 
 
+
+/* Layout update */
 
 void elfu_mPhdrUpdateChildOffsets(ElfuPhdr *mp)
 {
@@ -69,7 +109,8 @@ void elfu_mPhdrDestroy(ElfuPhdr* mp)
   assert(mp);
 
   CIRCLEQ_FOREACH(mp2, &mp->childPhdrList, elem) {
-    // TODO ?
+    CIRCLEQ_REMOVE(&mp->childPhdrList, mp2, elem);
+    elfu_mPhdrDestroy(mp2);
   }
 
   CIRCLEQ_FOREACH(ms, &mp->childScnList, elem) {
