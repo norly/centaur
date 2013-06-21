@@ -280,7 +280,7 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
 
 ElfuElf* elfu_mFromElf(Elf *e)
 {
-  ElfuElf *me;
+  ElfuElf *me = NULL;
   size_t shstrndx;
   size_t i, numPhdr, numShdr;
   ElfuScn **secArray = NULL;
