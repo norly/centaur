@@ -29,6 +29,10 @@ static GElf_Word pltLookupVal(ElfuElf *me, char *name)
 
   relplt = elfu_mScnForall(me, subFindByName, ".rel.plt", NULL);
   if (!relplt) {
+    /* x86-64 uses .rela.plt instead */
+    relplt = elfu_mScnForall(me, subFindByName, ".rela.plt", NULL);
+  }
+  if (!relplt) {
     ELFU_WARN("dynsymLookupVal: Could not find .rel.plt section in destination ELF.\n");
     return 0;
   }
