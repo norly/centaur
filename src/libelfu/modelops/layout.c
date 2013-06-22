@@ -161,8 +161,10 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
       *injPhdr = last;
     }
     return last->phdr.p_vaddr + (injOffset - last->phdr.p_offset);
-  } else if ((w && (first->phdr.p_flags & PF_W))
-             || (x && (first->phdr.p_flags & PF_X))) {
+  } else if (((w && (first->phdr.p_flags & PF_W))
+              || (x && (first->phdr.p_flags & PF_X)))
+             && /* Enough space to expand downwards? */
+             (first->phdr.p_vaddr > 3 * first->phdr.p_align)) {
     /* Need to prepend or split up the PHDR. */
     GElf_Off injOffset = OFFS_END(first->phdr.p_offset, first->phdr.p_filesz);
     ElfuScn *ms;
@@ -194,7 +196,7 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
     }
 
     /* Move other PHDRs and sections */
-    assert(size <= shiftStuffAtAfterOffset(me, injOffset, size));
+    assert(size <= shiftStuffAtAfterOffset(me, injOffset + 1, size));
 
     /* Remap ourselves */
     first->phdr.p_vaddr -= size;
