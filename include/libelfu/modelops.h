@@ -23,6 +23,11 @@ typedef void* (PhdrHandlerFunc)(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *aux
    size_t elfu_mPhdrCount(ElfuElf *me);
 ElfuPhdr* elfu_mPhdrByAddr(ElfuElf *me, GElf_Addr addr);
 ElfuPhdr* elfu_mPhdrByOffset(ElfuElf *me, GElf_Off offset);
+     void elfu_mPhdrLoadLowestHighest(ElfuElf *me,
+                                      ElfuPhdr **lowestAddr,
+                                      ElfuPhdr **highestAddr,
+                                      ElfuPhdr **lowestOffs,
+                                      ElfuPhdr **highestOffsEnd);
      void elfu_mPhdrUpdateChildOffsets(ElfuPhdr *mp);
 ElfuPhdr* elfu_mPhdrAlloc();
      void elfu_mPhdrDestroy(ElfuPhdr* mp);

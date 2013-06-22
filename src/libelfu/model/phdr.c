@@ -58,7 +58,7 @@ size_t elfu_mPhdrCount(ElfuElf *me)
 
 
 
-/* Finding */
+/* Finding by exact address/offset */
 
 static void* subFindLoadByAddr(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *aux2)
 {
@@ -97,6 +97,53 @@ static void* subFindLoadByOffset(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *au
 ElfuPhdr* elfu_mPhdrByOffset(ElfuElf *me, GElf_Off offset)
 {
   return elfu_mPhdrForall(me, subFindLoadByOffset, &offset, NULL);
+}
+
+
+
+
+/* Find lowest/highest address/offset */
+
+void elfu_mPhdrLoadLowestHighest(ElfuElf *me,
+                                 ElfuPhdr **lowestAddr, ElfuPhdr **highestAddr,
+                                 ElfuPhdr **lowestOffs, ElfuPhdr **highestOffsEnd)
+{
+  ElfuPhdr *mp;
+
+  assert(me);
+  assert(lowestAddr);
+  assert(highestAddr);
+  assert(lowestOffs);
+  assert(highestOffsEnd);
+
+  *lowestAddr = NULL;
+  *highestAddr = NULL;
+  *lowestOffs = NULL;
+  *highestOffsEnd = NULL;
+
+  /* Find first and last LOAD PHDRs.
+   * Don't compare p_memsz - segments don't overlap in memory. */
+  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
+    if (mp->phdr.p_type != PT_LOAD) {
+      continue;
+    }
+    if (!*lowestAddr || mp->phdr.p_vaddr < (*lowestAddr)->phdr.p_vaddr) {
+      *lowestAddr = mp;
+    }
+    if (!*highestAddr || mp->phdr.p_vaddr > (*highestAddr)->phdr.p_vaddr) {
+      *highestAddr = mp;
+    }
+    if (!*lowestOffs || mp->phdr.p_offset < (*lowestOffs)->phdr.p_offset) {
+      *lowestOffs = mp;
+    }
+    if (!*highestOffsEnd
+        || (OFFS_END(mp->phdr.p_offset,
+                     mp->phdr.p_filesz)
+            > OFFS_END((*highestOffsEnd)->phdr.p_offset,
+                       (*highestOffsEnd)->phdr.p_filesz))) {
+      *highestOffsEnd = mp;
+    }
+  }
 }
 
 
