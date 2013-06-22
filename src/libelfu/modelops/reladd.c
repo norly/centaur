@@ -66,7 +66,13 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
   GElf_Off injOffset;
   ElfuPhdr *injPhdr;
 
-  if (oldscn->shdr.sh_flags & SHF_ALLOC) {
+  if (!(oldscn->shdr.sh_flags & SHF_ALLOC)) {
+    ELFU_WARN("insertSection: Skipping non-memory section %s (type %d flags %u).\n",
+              elfu_mScnName(mrel, oldscn),
+              oldscn->shdr.sh_type,
+              (unsigned)oldscn->shdr.sh_flags);
+    goto ERROR;
+  } else {
     newscn = cloneScn(oldscn);
     if (!newscn) {
       return NULL;
@@ -105,13 +111,14 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
     newscn->shdr.sh_addr = injAddr;
     newscn->shdr.sh_offset = injOffset;
 
+    /* Insert section in child list, ordered by memory address */
     if (CIRCLEQ_EMPTY(&injPhdr->childScnList)
-        || CIRCLEQ_LAST(&injPhdr->childScnList)->shdr.sh_offset < injOffset) {
+        || CIRCLEQ_LAST(&injPhdr->childScnList)->shdr.sh_addr < injAddr) {
       CIRCLEQ_INSERT_TAIL(&injPhdr->childScnList, newscn, elemChildScn);
     } else {
       ElfuScn *ms;
       CIRCLEQ_FOREACH(ms, &injPhdr->childScnList, elemChildScn) {
-        if (injOffset < ms->shdr.sh_offset) {
+        if (injAddr < ms->shdr.sh_addr) {
           CIRCLEQ_INSERT_BEFORE(&injPhdr->childScnList, ms, newscn, elemChildScn);
           break;
         }
@@ -148,12 +155,6 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
     }
 
     return newscn;
-  } else {
-      ELFU_WARN("insertSection: Skipping non-memory section %s (type %d flags %u).\n",
-                elfu_mScnName(mrel, oldscn),
-                oldscn->shdr.sh_type,
-                (unsigned)oldscn->shdr.sh_flags);
-      goto ERROR;
   }
 
   ERROR:
