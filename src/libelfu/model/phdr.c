@@ -44,7 +44,6 @@ static void* subCounter(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *aux2)
   return NULL;
 }
 
-
 size_t elfu_mPhdrCount(ElfuElf *me)
 {
   size_t i = 0;
@@ -55,6 +54,51 @@ size_t elfu_mPhdrCount(ElfuElf *me)
 
   return i;
 }
+
+
+
+
+/* Finding */
+
+static void* subFindLoadByAddr(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *aux2)
+{
+  GElf_Addr addr = *(GElf_Addr*)aux1;
+  (void)aux2;
+
+  if (mp->phdr.p_type == PT_LOAD
+      && FULLY_OVERLAPPING(mp->phdr.p_vaddr, mp->phdr.p_memsz, addr, 1)) {
+    return mp;
+  }
+
+  /* Continue */
+  return NULL;
+}
+
+ElfuPhdr* elfu_mPhdrByAddr(ElfuElf *me, GElf_Addr addr)
+{
+  return elfu_mPhdrForall(me, subFindLoadByAddr, &addr, NULL);
+}
+
+
+static void* subFindLoadByOffset(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *aux2)
+{
+  GElf_Off offset = *(GElf_Off*)aux1;
+  (void)aux2;
+
+  if (mp->phdr.p_type == PT_LOAD
+      && FULLY_OVERLAPPING(mp->phdr.p_offset, mp->phdr.p_filesz, offset, 1)) {
+    return mp;
+  }
+
+  /* Continue */
+  return NULL;
+}
+
+ElfuPhdr* elfu_mPhdrByOffset(ElfuElf *me, GElf_Off offset)
+{
+  return elfu_mPhdrForall(me, subFindLoadByOffset, &offset, NULL);
+}
+
 
 
 
