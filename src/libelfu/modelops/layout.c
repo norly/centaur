@@ -68,6 +68,79 @@ static GElf_Word shiftStuffAtAfterOffset(ElfuElf *me,
 
 
 
+static ElfuPhdr* appendPhdr(ElfuElf *me)
+{
+  ElfuPhdr *phdrmp;
+  ElfuPhdr *newmp;
+
+  ELFU_DEBUG("Appending new PHDR\n");
+
+  /* See if we have enough space for more PHDRs. If not, expand
+   * the PHDR they are in. */
+  phdrmp = elfu_mPhdrByOffset(me, me->ehdr.e_phoff);
+  if (!phdrmp) {
+    /* No LOAD maps PHDRs into memory. Let re-layouter move them. */
+  } else {
+    GElf_Off phdr_maxsz = OFFS_END(phdrmp->phdr.p_offset, phdrmp->phdr.p_filesz);
+    ElfuScn *firstms = CIRCLEQ_FIRST(&phdrmp->childScnList);
+
+    /* How much can the PHDR table expand within its LOAD segment? */
+    if (firstms) {
+      phdr_maxsz = MIN(firstms->shdr.sh_offset, phdr_maxsz);
+    }
+    phdr_maxsz -= me->ehdr.e_phoff;
+
+    /* If we don't have enough space, try to make some by expanding
+     * the LOAD segment we are in. There is no other way. */
+    if (phdr_maxsz < (me->ehdr.e_phnum + 1) * me->ehdr.e_phentsize) {
+      ElfuPhdr *mp;
+      ElfuScn *ms;
+      GElf_Word size = ROUNDUP(me->ehdr.e_phentsize, phdrmp->phdr.p_align);
+
+      /* Move our sections */
+      CIRCLEQ_FOREACH(ms, &phdrmp->childScnList, elemChildScn) {
+        if (ms->shdr.sh_offset >= me->ehdr.e_phoff) {
+          ms->shdr.sh_offset += size;
+        }
+      }
+
+      /* Move our PHDRs */
+      CIRCLEQ_FOREACH(mp, &phdrmp->childPhdrList, elemChildPhdr) {
+        if (mp->phdr.p_offset > me->ehdr.e_phoff) {
+          mp->phdr.p_offset += size;
+        } else {
+          mp->phdr.p_vaddr -= size;
+          mp->phdr.p_paddr -= size;
+        }
+
+        if (mp->phdr.p_type == PT_PHDR) {
+          mp->phdr.p_filesz += me->ehdr.e_phentsize;
+          mp->phdr.p_memsz += me->ehdr.e_phentsize;
+        }
+      }
+
+      /* Move other PHDRs and sections */
+      assert(size <= shiftStuffAtAfterOffset(me, me->ehdr.e_phoff + 1, size));
+
+      /* Remap ourselves */
+      phdrmp->phdr.p_vaddr -= size;
+      phdrmp->phdr.p_paddr -= size;
+      phdrmp->phdr.p_filesz += size;
+      phdrmp->phdr.p_memsz += size;
+    }
+  }
+
+  newmp = elfu_mPhdrAlloc();
+  assert(newmp);
+  CIRCLEQ_INSERT_TAIL(&me->phdrList, newmp, elem);
+
+  return newmp;
+}
+
+
+
+
+
 /* Finds a suitable PHDR to insert a hole into and expands it
  * if necessary.
  * Returns memory address the hole will be mapped to, or 0 if
@@ -94,7 +167,7 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
   elfu_mPhdrLoadLowestHighest(me, &lowestAddr, &highestAddr,
                               &lowestOffs, &highestOffsEnd);
 
-  if (0 && ((w && (highestAddr->phdr.p_flags & PF_W))
+  if (((w && (highestAddr->phdr.p_flags & PF_W))
       || (x && (highestAddr->phdr.p_flags & PF_X)))
       /* Merging only works if the LOAD is the last both in file and mem */
       && highestAddr == highestOffsEnd) {
@@ -155,7 +228,7 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
       *injPhdr = highestAddr;
     }
     return highestAddr->phdr.p_vaddr + (injOffset - highestAddr->phdr.p_offset);
-  } else if (0 && ((w && (lowestAddr->phdr.p_flags & PF_W))
+  } else if (((w && (lowestAddr->phdr.p_flags & PF_W))
               || (x && (lowestAddr->phdr.p_flags & PF_X)))
              && /* Enough space to expand downwards? */
              (lowestAddr->phdr.p_vaddr > 3 * lowestAddr->phdr.p_align)
@@ -207,7 +280,37 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
       *injPhdr = lowestAddr;
     }
     return lowestAddr->phdr.p_vaddr + (injOffset - lowestAddr->phdr.p_offset);
+  } else {
+    ElfuPhdr *newmp;
+    GElf_Off injOffset;
+    GElf_Addr injAddr;
+
+    /* Add a new LOAD PHDR. */
+    newmp = appendPhdr(me);
+
+    /* ELF spec: We need (p_offset % p_align) == (p_vaddr % p_align) */
+    injOffset = OFFS_END(highestOffsEnd->phdr.p_offset, highestOffsEnd->phdr.p_filesz);
+    injOffset = ROUNDUP(injOffset, align);
+    injAddr = OFFS_END(highestAddr->phdr.p_vaddr, highestAddr->phdr.p_memsz);
+    injAddr = ROUNDUP(injAddr, highestAddr->phdr.p_align);
+    injAddr += injOffset % highestAddr->phdr.p_align;
+
+    newmp->phdr.p_align = highestAddr->phdr.p_align;
+    newmp->phdr.p_filesz = size;
+    newmp->phdr.p_memsz = size;
+    newmp->phdr.p_flags = PF_R | (x ? PF_X : 0) | (w ? PF_W : 0);
+    newmp->phdr.p_type = PT_LOAD;
+    newmp->phdr.p_offset = injOffset;
+    newmp->phdr.p_vaddr = injAddr;
+    newmp->phdr.p_paddr = newmp->phdr.p_vaddr;
+
+    *injPhdr = newmp;
+
+    return injAddr;
   }
+
+
+
 
   ERROR:
   if (injPhdr) {
