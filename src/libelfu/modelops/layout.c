@@ -76,8 +76,10 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
                                      GElf_Word align, int w, int x,
                                      ElfuPhdr **injPhdr)
 {
-  ElfuPhdr *first = NULL;
-  ElfuPhdr *last = NULL;
+  ElfuPhdr *lowestAddr;
+  ElfuPhdr *highestAddr;
+  ElfuPhdr *lowestOffs;
+  ElfuPhdr *highestOffsEnd;
   ElfuPhdr *mp;
 
   assert(!(w && x));
@@ -88,36 +90,28 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
     x = 1;
   }
 
-  /* Find first and last LOAD PHDRs.
-   * Don't compare p_memsz - segments don't overlap in memory. */
-  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
-    if (mp->phdr.p_type != PT_LOAD) {
-      continue;
-    }
-    if (!first || mp->phdr.p_vaddr < first->phdr.p_vaddr) {
-      first = mp;
-    }
-    if (!last || mp->phdr.p_vaddr > last->phdr.p_vaddr) {
-      last = mp;
-    }
-  }
+  /* Find first and last LOAD PHDRs. */
+  elfu_mPhdrLoadLowestHighest(me, &lowestAddr, &highestAddr,
+                              &lowestOffs, &highestOffsEnd);
 
-  if ((w && (last->phdr.p_flags & PF_W))
-      || (x && (last->phdr.p_flags & PF_X))) {
+  if (((w && (highestAddr->phdr.p_flags & PF_W))
+      || (x && (highestAddr->phdr.p_flags & PF_X)))
+      /* Merging only works if the LOAD is the last both in file and mem */
+      && highestAddr == highestOffsEnd) {
     /* Need to append. */
-    GElf_Off injOffset = OFFS_END(last->phdr.p_offset, last->phdr.p_filesz);
+    GElf_Off injOffset = OFFS_END(highestAddr->phdr.p_offset, highestAddr->phdr.p_filesz);
     GElf_Word injSpace = 0;
-    GElf_Word nobitsize = last->phdr.p_memsz - last->phdr.p_filesz;
+    GElf_Word nobitsize = highestAddr->phdr.p_memsz - highestAddr->phdr.p_filesz;
 
     /* Expand NOBITS if any */
     if (nobitsize > 0) {
-      GElf_Off endOff = OFFS_END(last->phdr.p_offset, last->phdr.p_filesz);
-      GElf_Off endAddr = OFFS_END(last->phdr.p_vaddr, last->phdr.p_filesz);
+      GElf_Off endOff = OFFS_END(highestAddr->phdr.p_offset, highestAddr->phdr.p_filesz);
+      GElf_Off endAddr = OFFS_END(highestAddr->phdr.p_vaddr, highestAddr->phdr.p_filesz);
       ElfuScn *ms;
 
       ELFU_INFO("Expanding NOBITS at address 0x%x...\n", (unsigned)endAddr);
 
-      CIRCLEQ_FOREACH(ms, &last->childScnList, elemChildScn) {
+      CIRCLEQ_FOREACH(ms, &highestAddr->childScnList, elemChildScn) {
         if (ms->shdr.sh_offset == endOff) {
           assert(ms->shdr.sh_type == SHT_NOBITS);
           assert(ms->shdr.sh_size == nobitsize);
@@ -138,8 +132,8 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
       injSpace += shiftStuffAtAfterOffset(me, endOff, nobitsize);
       injSpace -= nobitsize;
       injOffset += nobitsize;
-      last->phdr.p_filesz += nobitsize;
-      assert(last->phdr.p_filesz == last->phdr.p_memsz);
+      highestAddr->phdr.p_filesz += nobitsize;
+      assert(highestAddr->phdr.p_filesz == highestAddr->phdr.p_memsz);
     }
 
     /* Calculate how much space we need, taking alignment into account */
@@ -152,41 +146,44 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
     assert(injSpace >= size);
 
     /* Remap ourselves */
-    last->phdr.p_filesz += size;
-    last->phdr.p_memsz += size;
+    highestAddr->phdr.p_filesz += size;
+    highestAddr->phdr.p_memsz += size;
 
     injOffset = ROUNDUP(injOffset, align);
 
     if (injPhdr) {
-      *injPhdr = last;
+      *injPhdr = highestAddr;
     }
-    return last->phdr.p_vaddr + (injOffset - last->phdr.p_offset);
-  } else if (((w && (first->phdr.p_flags & PF_W))
-              || (x && (first->phdr.p_flags & PF_X)))
+    return highestAddr->phdr.p_vaddr + (injOffset - highestAddr->phdr.p_offset);
+  } else if (((w && (lowestAddr->phdr.p_flags & PF_W))
+              || (x && (lowestAddr->phdr.p_flags & PF_X)))
              && /* Enough space to expand downwards? */
-             (first->phdr.p_vaddr > 3 * first->phdr.p_align)) {
+             (lowestAddr->phdr.p_vaddr > 3 * lowestAddr->phdr.p_align)
+             /* Merging only works if the LOAD is the first both in file and mem */
+             && lowestAddr == lowestOffs) {
     /* Need to prepend or split up the PHDR. */
-    GElf_Off injOffset = OFFS_END(first->phdr.p_offset, first->phdr.p_filesz);
+    GElf_Off injOffset = OFFS_END(lowestAddr->phdr.p_offset,
+                                  lowestAddr->phdr.p_filesz);
     ElfuScn *ms;
 
     /* Round up size to take PHDR alignment into account.
      * We assume that this is a multiple of the alignment asked for. */
-    assert(first->phdr.p_align >= align);
-    size = ROUNDUP(size, first->phdr.p_align);
+    assert(lowestAddr->phdr.p_align >= align);
+    size = ROUNDUP(size, lowestAddr->phdr.p_align);
 
     /* Find first section. We assume there is at least one. */
-    assert(!CIRCLEQ_EMPTY(&first->childScnList));
-    injOffset = CIRCLEQ_FIRST(&first->childScnList)->shdr.sh_offset;
+    assert(!CIRCLEQ_EMPTY(&lowestAddr->childScnList));
+    injOffset = CIRCLEQ_FIRST(&lowestAddr->childScnList)->shdr.sh_offset;
 
     /* Move our sections */
-    CIRCLEQ_FOREACH(ms, &first->childScnList, elemChildScn) {
+    CIRCLEQ_FOREACH(ms, &lowestAddr->childScnList, elemChildScn) {
       if (ms->shdr.sh_offset >= injOffset) {
         ms->shdr.sh_offset += size;
       }
     }
 
     /* Move our PHDRs */
-    CIRCLEQ_FOREACH(mp, &first->childPhdrList, elemChildPhdr) {
+    CIRCLEQ_FOREACH(mp, &lowestAddr->childPhdrList, elemChildPhdr) {
       if (mp->phdr.p_offset >= injOffset) {
         mp->phdr.p_offset += size;
       } else {
@@ -199,17 +196,17 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
     assert(size <= shiftStuffAtAfterOffset(me, injOffset + 1, size));
 
     /* Remap ourselves */
-    first->phdr.p_vaddr -= size;
-    first->phdr.p_paddr -= size;
-    first->phdr.p_filesz += size;
-    first->phdr.p_memsz += size;
+    lowestAddr->phdr.p_vaddr -= size;
+    lowestAddr->phdr.p_paddr -= size;
+    lowestAddr->phdr.p_filesz += size;
+    lowestAddr->phdr.p_memsz += size;
 
     injOffset = ROUNDUP(injOffset, align);
 
     if (injPhdr) {
-      *injPhdr = first;
+      *injPhdr = lowestAddr;
     }
-    return first->phdr.p_vaddr + (injOffset - first->phdr.p_offset);
+    return lowestAddr->phdr.p_vaddr + (injOffset - lowestAddr->phdr.p_offset);
   }
 
   ERROR:
