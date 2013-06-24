@@ -94,7 +94,7 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
   elfu_mPhdrLoadLowestHighest(me, &lowestAddr, &highestAddr,
                               &lowestOffs, &highestOffsEnd);
 
-  if (((w && (highestAddr->phdr.p_flags & PF_W))
+  if (0 && ((w && (highestAddr->phdr.p_flags & PF_W))
       || (x && (highestAddr->phdr.p_flags & PF_X)))
       /* Merging only works if the LOAD is the last both in file and mem */
       && highestAddr == highestOffsEnd) {
@@ -155,7 +155,7 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
       *injPhdr = highestAddr;
     }
     return highestAddr->phdr.p_vaddr + (injOffset - highestAddr->phdr.p_offset);
-  } else if (((w && (lowestAddr->phdr.p_flags & PF_W))
+  } else if (0 && ((w && (lowestAddr->phdr.p_flags & PF_W))
               || (x && (lowestAddr->phdr.p_flags & PF_X)))
              && /* Enough space to expand downwards? */
              (lowestAddr->phdr.p_vaddr > 3 * lowestAddr->phdr.p_align)
@@ -219,39 +219,23 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
 
 
 
-static int cmpPhdrOffs(const void *mp1, const void *mp2)
-{
-  ElfuPhdr *p1;
-  ElfuPhdr *p2;
-
-  assert(mp1);
-  assert(mp2);
-
-  p1 = *(ElfuPhdr**)mp1;
-  p2 = *(ElfuPhdr**)mp2;
-
-  assert(p1);
-  assert(p2);
-
-
-  if (p1->phdr.p_offset < p2->phdr.p_offset) {
-    return -1;
-  } else if (p1->phdr.p_offset == p2->phdr.p_offset) {
-    return 0;
-  } else /* if (p1->phdr.p_offset > p2->phdr.p_offset) */ {
-    return 1;
-  }
-}
 
 int elfu_mLayoutAuto(ElfuElf *me)
 {
+  ElfuPhdr *lowestAddr;
+  ElfuPhdr *highestAddr;
+  ElfuPhdr *lowestOffs;
+  ElfuPhdr *highestOffsEnd;
   ElfuPhdr *mp;
   ElfuScn *ms;
   ElfuPhdr **phdrArr;
   GElf_Off lastend = 0;
-  size_t i, j;
 
   assert(me);
+
+  /* Find first and last LOAD PHDRs. */
+  elfu_mPhdrLoadLowestHighest(me, &lowestAddr, &highestAddr,
+                              &lowestOffs, &highestOffsEnd);
 
   phdrArr = malloc(elfu_mPhdrCount(me) * sizeof(*phdrArr));
   if (!phdrArr) {
@@ -259,43 +243,27 @@ int elfu_mLayoutAuto(ElfuElf *me)
     return 1;
   }
 
-  i = 0;
-  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
-    if (mp->phdr.p_type != PT_LOAD) {
-      continue;
+
+  lastend = OFFS_END(highestOffsEnd->phdr.p_offset, highestOffsEnd->phdr.p_filesz);
+
+
+  /* If PHDRs are not mapped into memory, place them after LOAD segments. */
+  mp = elfu_mPhdrByOffset(me, me->ehdr.e_phoff);
+  if (!mp) {
+    lastend = ROUNDUP(lastend, 8);
+    me->ehdr.e_phoff = lastend;
+    lastend += me->ehdr.e_phnum * me->ehdr.e_phentsize;
+  } else {
+    /* Update size of PHDR PHDR */
+    ElfuPhdr *phdrmp;
+
+    CIRCLEQ_FOREACH(phdrmp, &mp->childPhdrList, elemChildPhdr) {
+      if (phdrmp->phdr.p_type == PT_PHDR) {
+        phdrmp->phdr.p_filesz = elfu_mPhdrCount(me) * me->ehdr.e_phentsize;
+        phdrmp->phdr.p_memsz = elfu_mPhdrCount(me) * me->ehdr.e_phentsize;
+      }
     }
-
-    phdrArr[i] = mp;
-    i++;
   }
-
-  /* Assume we have at least one LOAD PHDR,
-   * and that it ends after EHDR and PHDRs */
-  assert(i > 1);
-
-  /* Sort array by file offset */
-  qsort(phdrArr, i, sizeof(*phdrArr), cmpPhdrOffs);
-
-  lastend = OFFS_END(phdrArr[0]->phdr.p_offset, phdrArr[0]->phdr.p_filesz);
-
-  /* Wiggle offsets of 2nd, 3rd etc so take minimum space */
-  for (j = 1; j < i; j++) {
-    GElf_Off subalign = phdrArr[j]->phdr.p_offset % phdrArr[j]->phdr.p_align;
-
-    if ((lastend % phdrArr[j]->phdr.p_align) <= subalign) {
-      lastend += subalign - (lastend % phdrArr[j]->phdr.p_align);
-    } else {
-      lastend += phdrArr[j]->phdr.p_align - ((lastend % phdrArr[j]->phdr.p_align) - subalign);
-    }
-
-    phdrArr[j]->phdr.p_offset = lastend;
-
-    elfu_mPhdrUpdateChildOffsets(phdrArr[j]);
-
-    lastend = OFFS_END(phdrArr[j]->phdr.p_offset, phdrArr[j]->phdr.p_filesz);
-  }
-
-  free(phdrArr);
 
 
   /* Place orphaned sections afterwards, maintaining alignment */
