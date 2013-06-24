@@ -1,8 +1,6 @@
 LIBNAME := elfu
 EXENAME := elfucli
 
-LIBRARIES := libelf
-
 BUILDDIR   := build
 INCLUDEDIR := include
 SRCDIR     := src
@@ -24,9 +22,22 @@ EXESRCS := $(filter-out $(SRCDIR)/lib$(LIBNAME)/%.c, $(ALLSRCS))
 LIBOBJS := $(patsubst %.c, $(BUILDDIR)/%.o, $(LIBSRCS))
 EXEOBJS := $(patsubst %.c, $(BUILDDIR)/%.o, $(EXESRCS))
 
-INCLUDES := $(patsubst %, -I%, $(INCLUDEDIR) $(SRCDIR)) $(shell pkg-config --cflags-only-I $(LIBRARIES))
-CFLAGS   := -g -Wall -std=gnu99 -pedantic -fPIC $(shell pkg-config --cflags-only-other $(LIBRARIES))
-LDFLAGS  := $(shell pkg-config --libs $(LIBRARIES))
+
+ifeq ($(shell pkg-config --exists libelf > /dev/null 2> /dev/null ; echo $$?),0)
+	LIBELF_INCLUDES := $(shell pkg-config --cflags-only-I libelf)
+	LIBELF_CFLAGS   := $(shell pkg-config --cflags-only-other libelf)
+	LIBELF_LDFLAGS  := $(shell pkg-config --libs libelf)
+else
+	LIBELF_INCLUDES :=
+	LIBELF_CFLAGS   :=
+	LIBELF_LDFLAGS  := -lelf
+endif
+
+
+INCLUDES := $(patsubst %, -I%, $(INCLUDEDIR) $(SRCDIR)) $(LIBELF_INCLUDES)
+CFLAGS   := -g -Wall -std=gnu99 -pedantic -fPIC $(LIBELF_CFLAGS)
+LDFLAGS  := $(LIBELF_LDFLAGS)
+
 
 
 
