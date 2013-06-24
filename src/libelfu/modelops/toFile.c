@@ -110,6 +110,8 @@ void elfu_mToElf(ElfuElf *me, Elf *e)
 
   elfu_mPhdrForall(me, modelToPhdr, &i, e);
 
+  elfu_eReorderPhdrs(e);
+
 
   /* Done */
   elf_flagelf(e, ELF_C_SET, ELF_F_DIRTY);

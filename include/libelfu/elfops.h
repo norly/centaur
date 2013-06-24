@@ -8,6 +8,7 @@
 
 
 int elfu_eCheck(Elf *e);
+void elfu_eReorderPhdrs(Elf *e);
 
 
 #endif
