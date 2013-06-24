@@ -252,9 +252,6 @@ static ElfuScn* modelFromSection(Elf_Scn *scn)
     data = elf_rawdata(scn, NULL);
     assert(data);
 
-    /* elf_rawdata() always returns ELF_T_BYTE */
-    assert(data->d_type == ELF_T_BYTE);
-
     while (data) {
       if (data->d_off + data->d_size > ms->shdr.sh_size) {
         ELFU_WARN("modelFromSection: libelf delivered a bogus data blob. Skipping\n");
