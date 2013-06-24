@@ -1,0 +1,11 @@
+#!/bin/sh
+source ./boilerplate.sh
+
+elfucli --input reference/putsmain64 \
+        --reladd reference/puts-alternative64.o \
+        --output $BUILDDIR/putsmain64-with-puts-alternative64
+test_check_retval
+
+cmp reference/putsmain64-with-puts-alternative64 \
+    $BUILDDIR/putsmain64-with-puts-alternative64
+test_check_retval

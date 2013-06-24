@@ -1,0 +1,10 @@
+#!/bin/sh
+source ./boilerplate.sh
+
+elfucli --input reference/putsmain64 \
+        --output $BUILDDIR/putsmain64-cloned
+test_check_retval
+
+cmp reference/putsmain64-cloned \
+    $BUILDDIR/putsmain64-cloned
+test_check_retval
