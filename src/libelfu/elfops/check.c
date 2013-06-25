@@ -162,6 +162,18 @@ int elfu_eCheck(Elf *e)
           ELFU_WARN("elfu_eCheck: Sections %d and %d overlap in file.\n", i, j);
           goto ERROR;
         }
+
+        /* We may not have more than one symbol table */
+        if (shdrs[i].sh_type == SHT_SYMTAB && shdrs[j].sh_type == SHT_SYMTAB) {
+          ELFU_WARN("elfu_eCheck: Found more than one SYMTAB section.\n");
+          goto ERROR;
+        }
+
+        /* We may not have more than one dynamic symbol table */
+        if (shdrs[i].sh_type == SHT_DYNSYM && shdrs[j].sh_type == SHT_DYNSYM) {
+          ELFU_WARN("elfu_eCheck: Found more than one DYNSYM section.\n");
+          goto ERROR;
+        }
       }
 
       /* Section addr/offset should match parent PHDR.
@@ -172,7 +184,7 @@ int elfu_eCheck(Elf *e)
 
           if (shdrs[i].sh_offset != shoff
               || !PHDR_CONTAINS_SCN_IN_FILE(&phdrs[j], &shdrs[i])) {
-            ELFU_WARN("elfu_eCheck: Memory/file offsets/sizes are not congruent for SHDR %d, PHDR %d.\n", i, j);
+            ELFU_WARN("elfu_eCheck: SHDR %d and PHDR %d report conflicting file/memory regions.\n", i, j);
             goto ERROR;
           }
         }
