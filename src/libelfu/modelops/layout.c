@@ -240,7 +240,8 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
   } else if (((w && (lowestAddr->phdr.p_flags & PF_W))
               || (x && (lowestAddr->phdr.p_flags & PF_X)))
              && /* Enough space to expand downwards? */
-             (lowestAddr->phdr.p_vaddr > 3 * lowestAddr->phdr.p_align)
+             (lowestAddr->phdr.p_vaddr >= ((2 * lowestAddr->phdr.p_align)
+                                           + ROUNDUP(size, lowestAddr->phdr.p_align)))
              /* Merging only works if the LOAD is the first both in file and mem */
              && lowestAddr == lowestOffs) {
     /* Need to prepend or split up the PHDR. */
