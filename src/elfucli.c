@@ -149,8 +149,14 @@ int main(int argc, char **argv)
             goto ERR;
           } else {
             printf("--reladd: Injecting %s...\n", optarg);
-            elfu_mCheck(mrel);
-            elfu_mReladd(me, mrel);
+            if (elfu_mCheck(mrel)) {
+              printf("--reladd: Check for input file failed.\n");
+              goto ERR;
+            }
+            if (elfu_mReladd(me, mrel)) {
+              printf("--reladd: Failed.\n");
+              goto ERR;
+            }
             printf("--reladd: Injected %s.\n", optarg);
           }
         }

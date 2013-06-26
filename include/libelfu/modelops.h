@@ -10,12 +10,11 @@
 #define ELFU_SYMSTR(symtabscn, off) ((symtabscn)->linkptr->databuf + (off))
 
 
-GElf_Word elfu_mSymtabLookupVal(ElfuElf *me, ElfuScn *msst, GElf_Word entry);
-GElf_Word elfu_mSymtabLookupAddrByName(ElfuElf *me, ElfuScn *msst, char *name);
-void elfu_mSymtabFlatten(ElfuElf *me);
-
-
-void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);
+      int elfu_mSymtabLookupSymToAddr(ElfuElf *me, ElfuScn *msst, ElfuSym *sym, GElf_Addr *result);
+    char* elfu_mSymtabSymToName(ElfuScn *msst, ElfuSym *sym);
+ ElfuSym* elfu_mSymtabIndexToSym(ElfuScn *msst, GElf_Word entry);
+GElf_Addr elfu_mSymtabLookupAddrByName(ElfuElf *me, ElfuScn *msst, char *name);
+     void elfu_mSymtabFlatten(ElfuElf *me);
 
 
 typedef void* (PhdrHandlerFunc)(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *aux2);
@@ -54,7 +53,10 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
 int elfu_mLayoutAuto(ElfuElf *me);
 
 
-void elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);
+int elfu_mDynLookupPltAddrByName(ElfuElf *me, char *name, GElf_Addr *result);
+
+
+int elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);
 
 
 int elfu_mCheck(ElfuElf *me);
@@ -68,7 +70,7 @@ void elfu_mDumpElf(ElfuElf *me);
 ElfuElf* elfu_mFromElf(Elf *e);
     void elfu_mToElf(ElfuElf *me, Elf *e);
 
-void elfu_mReladd(ElfuElf *me, const ElfuElf *mrel);
+ int elfu_mReladd(ElfuElf *me, const ElfuElf *mrel);
 
 void elfu_mDetour(ElfuElf *me, GElf_Addr from, GElf_Addr to);
 

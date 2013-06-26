@@ -210,7 +210,9 @@ static void* subScnAdd2(ElfuElf *mrel, ElfuScn *ms, void *aux1, void *aux2)
     case SHT_RELA: /* 4 */
     case SHT_REL: /* 9 */
       /* Relocate. */
-      elfu_mRelocate(me, elfu_mScnByOldscn(me, ms->infoptr), ms);
+      if (elfu_mRelocate(me, elfu_mScnByOldscn(me, ms->infoptr), ms)) {
+        return (void*)-1;
+      }
       break;
 
     /* The next section types either do not occur in .o files, or are
@@ -328,7 +330,7 @@ static void mergeSymtab(ElfuElf *me, const ElfuElf *mrel)
 
 
 
-void elfu_mReladd(ElfuElf *me, const ElfuElf *mrel)
+int elfu_mReladd(ElfuElf *me, const ElfuElf *mrel)
 {
   assert(me);
   assert(mrel);
@@ -339,8 +341,13 @@ void elfu_mReladd(ElfuElf *me, const ElfuElf *mrel)
   mergeSymtab(me, mrel);
 
   /* Do relocations and other stuff */
-  elfu_mScnForall((ElfuElf*)mrel, subScnAdd2, me, NULL);
+  if (elfu_mScnForall((ElfuElf*)mrel, subScnAdd2, me, NULL)) {
+    ELFU_WARN("elfu_mReladd: Reladd aborted. Target model is unclean.\n");
+    return -1;
+  }
 
   /* Re-layout to accommodate new contents */
   elfu_mLayoutAuto(me);
+
+  return 0;
 }
