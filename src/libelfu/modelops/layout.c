@@ -101,7 +101,8 @@ static ElfuPhdr* appendPhdr(ElfuElf *me)
                                 &lowestOffs, &highestOffsEnd);
     if (phdr_maxsz < (me->ehdr.e_phnum + 1) * me->ehdr.e_phentsize
         && phdrmp == lowestAddr
-        && phdrmp == lowestOffs) {
+        && phdrmp == lowestOffs
+        && (lowestAddr->phdr.p_vaddr >= 2 * lowestAddr->phdr.p_align)) {
       ElfuPhdr *mp;
       ElfuScn *ms;
       GElf_Word size = ROUNDUP(me->ehdr.e_phentsize, phdrmp->phdr.p_align);
