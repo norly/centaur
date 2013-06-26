@@ -70,6 +70,10 @@ static GElf_Word shiftStuffAtAfterOffset(ElfuElf *me,
 
 static ElfuPhdr* appendPhdr(ElfuElf *me)
 {
+  ElfuPhdr *lowestAddr;
+  ElfuPhdr *highestAddr;
+  ElfuPhdr *lowestOffs;
+  ElfuPhdr *highestOffsEnd;
   ElfuPhdr *phdrmp;
   ElfuPhdr *newmp;
 
@@ -91,8 +95,13 @@ static ElfuPhdr* appendPhdr(ElfuElf *me)
     phdr_maxsz -= me->ehdr.e_phoff;
 
     /* If we don't have enough space, try to make some by expanding
-     * the LOAD segment we are in. There is no other way. */
-    if (phdr_maxsz < (me->ehdr.e_phnum + 1) * me->ehdr.e_phentsize) {
+     * the LOAD segment we are in. There is no other way.
+     * Also, we can only expand if it is the first LOAD PHDR. */
+    elfu_mPhdrLoadLowestHighest(me, &lowestAddr, &highestAddr,
+                                &lowestOffs, &highestOffsEnd);
+    if (phdr_maxsz < (me->ehdr.e_phnum + 1) * me->ehdr.e_phentsize
+        && phdrmp == lowestAddr
+        && phdrmp == lowestOffs) {
       ElfuPhdr *mp;
       ElfuScn *ms;
       GElf_Word size = ROUNDUP(me->ehdr.e_phentsize, phdrmp->phdr.p_align);
@@ -287,6 +296,9 @@ GElf_Addr elfu_mLayoutGetSpaceInPhdr(ElfuElf *me, GElf_Word size,
 
     /* Add a new LOAD PHDR. */
     newmp = appendPhdr(me);
+    if (!newmp) {
+      goto ERROR;
+    }
 
     /* ELF spec: We need (p_offset % p_align) == (p_vaddr % p_align) */
     injOffset = OFFS_END(highestOffsEnd->phdr.p_offset, highestOffsEnd->phdr.p_filesz);
