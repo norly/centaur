@@ -35,7 +35,7 @@ endif
 
 
 INCLUDES := $(patsubst %, -I%, $(INCLUDEDIR) $(SRCDIR)) $(LIBELF_INCLUDES)
-CFLAGS   := -g -Wall -std=gnu99 -pedantic -fPIC $(LIBELF_CFLAGS)
+CFLAGS   := -g -Wall -std=gnu99 -pedantic $(LIBELF_CFLAGS)
 LDFLAGS  := $(LIBELF_LDFLAGS)
 
 
@@ -58,8 +58,8 @@ debug: $(EXE)
 $(EXE): $(EXEOBJS) $(STATICLIB)
 	gcc -o $@ $^ $(LDFLAGS)
 
-$(SHAREDLIB): $(LIBOBJS)
-	gcc -shared -Wl,-soname,lib$(LIBNAME).so.$(SHARED_VERMAJ) -o $@ $^ $(LDFLAGS)
+$(SHAREDLIB): $(LIBSRCS)
+	gcc $(INCLUDES) $(CFLAGS) -shared -fPIC -Wl,-soname,lib$(LIBNAME).so.$(SHARED_VERMAJ) -o $@ $^ $(LDFLAGS)
 
 $(STATICLIB): $(LIBOBJS)
 	ar rcs $@ $^
