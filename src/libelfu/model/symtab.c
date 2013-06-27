@@ -198,3 +198,48 @@ void elfu_mSymtabFlatten(ElfuElf *me)
 
   elfu_mLayoutAuto(me);
 }
+
+
+
+void elfu_mSymtabAddGlobalDymtabIfNotPresent(ElfuElf *me)
+{
+  assert(me);
+
+  if (!me->symtab) {
+    ElfuScn *symtab;
+    ElfuScn *strtab;
+
+    symtab = elfu_mScnAlloc();
+    assert(symtab);
+    strtab = elfu_mScnAlloc();
+    assert(strtab);
+
+    symtab->linkptr = strtab;
+    symtab->shdr.sh_entsize = me->elfclass == ELFCLASS32 ? sizeof(Elf32_Sym) : sizeof(Elf64_Sym);
+    symtab->shdr.sh_addralign = 4;
+    strtab->shdr.sh_addralign = 1;
+    symtab->shdr.sh_type = SHT_SYMTAB;
+    strtab->shdr.sh_type = SHT_STRTAB;
+
+    strtab->databuf = malloc(1);
+    assert(strtab->databuf);
+    strtab->databuf[0] = 0;
+
+    CIRCLEQ_INSERT_TAIL(&me->orphanScnList, symtab, elemChildScn);
+    CIRCLEQ_INSERT_TAIL(&me->orphanScnList, strtab, elemChildScn);
+
+    me->symtab = symtab;
+
+    if (me->shstrtab) {
+      symtab->shdr.sh_name = me->shstrtab->shdr.sh_size;
+      if (elfu_mScnAppendData(me->shstrtab, ".symtab", 8)) {
+        symtab->shdr.sh_name = 0;
+      }
+
+      strtab->shdr.sh_name = me->shstrtab->shdr.sh_size;
+      if (elfu_mScnAppendData(me->shstrtab, ".strtab", 8)) {
+        strtab->shdr.sh_name = 0;
+      }
+    }
+  }
+}

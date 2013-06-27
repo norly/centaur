@@ -36,28 +36,6 @@ static ElfuScn* cloneScn(ElfuScn *ms)
 }
 
 
-static int appendData(ElfuScn *ms, void *buf, size_t len)
-{
-  char *newbuf;
-
-  assert(ms);
-  assert(ms->shdr.sh_type != SHT_NOBITS);
-  assert(ms->databuf);
-
-  newbuf = realloc(ms->databuf, ms->shdr.sh_size + len);
-  if (!newbuf) {
-    ELFU_WARN("appendData: malloc() failed for newbuf.\n");
-    return 1;
-  }
-
-  ms->databuf = newbuf;
-  memcpy(newbuf + ms->shdr.sh_size, buf, len);
-  ms->shdr.sh_size += len;
-  assert(ms->shdr.sh_size == ms->shdr.sh_size);
-
-  return 0;
-}
-
 
 static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
 {
@@ -128,7 +106,6 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
 
     /* Inject name */
     if (me->shstrtab) {
-      char *newname;
       size_t newnamelen;
 
       newnamelen = strlen("reladd") + 1;
@@ -136,21 +113,15 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
         newnamelen += strlen(elfu_mScnName(mrel, oldscn));
       }
 
-      newname = malloc(newnamelen);
+      char newname[newnamelen];
+
       strcpy(newname, "reladd");
       strcat(newname, elfu_mScnName(mrel, oldscn));
 
-      if (!newname) {
-        ELFU_WARN("insertSection: malloc() failed for newname. Leaving section name empty.\n");
+      newscn->shdr.sh_name = me->shstrtab->shdr.sh_size;
+
+      if (elfu_mScnAppendData(me->shstrtab, newname, newnamelen)) {
         newscn->shdr.sh_name = 0;
-      } else {
-        size_t offset = me->shstrtab->shdr.sh_size;
-
-        if (!appendData(me->shstrtab, newname, newnamelen)) {
-          newscn->shdr.sh_name = offset;
-        }
-
-        free(newname);
       }
     }
 
@@ -262,8 +233,9 @@ static void insertSymClone(ElfuElf *me, const ElfuScn *oldmsst, const ElfuSym *o
     }
   }
 
-  // TODO: Allocate symtab if none present
-  assert(me->symtab);
+  /* If we don't have a symbol table, create one so we have somewhere to
+   * write our new symbols to. */
+  elfu_mSymtabAddGlobalDymtabIfNotPresent(me);
 
   /* Allocate memory for the cloned symbol */
   newsym = malloc(sizeof(*newsym));

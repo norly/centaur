@@ -15,6 +15,7 @@
  ElfuSym* elfu_mSymtabIndexToSym(ElfuScn *msst, GElf_Word entry);
 GElf_Addr elfu_mSymtabLookupAddrByName(ElfuElf *me, ElfuScn *msst, char *name);
      void elfu_mSymtabFlatten(ElfuElf *me);
+     void elfu_mSymtabAddGlobalDymtabIfNotPresent(ElfuElf *me);
 
 
 typedef void* (PhdrHandlerFunc)(ElfuElf *me, ElfuPhdr *mp, void *aux1, void *aux2);
@@ -39,6 +40,7 @@ typedef void* (SectionHandlerFunc)(ElfuElf *me, ElfuScn *ms, void *aux1, void *a
  ElfuScn* elfu_mScnByOldscn(ElfuElf *me, ElfuScn *oldscn);
     char* elfu_mScnName(ElfuElf *me, ElfuScn *ms);
 ElfuScn** elfu_mScnSortedByOffset(ElfuElf *me, size_t *count);
+      int elfu_mScnAppendData(ElfuScn *ms, void *buf, size_t len);
  ElfuScn* elfu_mScnAlloc();
      void elfu_mScnDestroy(ElfuScn* ms);
 

@@ -198,6 +198,30 @@ ElfuScn** elfu_mScnSortedByOffset(ElfuElf *me, size_t *count)
 
 
 
+int elfu_mScnAppendData(ElfuScn *ms, void *buf, size_t len)
+{
+  char *newbuf;
+
+  assert(ms);
+  assert(ms->shdr.sh_type != SHT_NOBITS);
+  assert(ms->databuf);
+
+  newbuf = realloc(ms->databuf, ms->shdr.sh_size + len);
+  if (!newbuf) {
+    ELFU_WARN("elfu_mScnAppendData: malloc() failed for newbuf.\n");
+    return -1;
+  }
+
+  ms->databuf = newbuf;
+  memcpy(newbuf + ms->shdr.sh_size, buf, len);
+  ms->shdr.sh_size += len;
+  assert(ms->shdr.sh_size == ms->shdr.sh_size);
+
+  return 0;
+}
+
+
+
 /*
  * Allocation, destruction
  */
