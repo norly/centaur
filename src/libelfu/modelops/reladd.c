@@ -326,6 +326,8 @@ static void mergeSymtab(ElfuElf *me, const ElfuElf *mrel)
   CIRCLEQ_FOREACH(sym, &mrel->symtab->symtab.syms, elem) {
     insertSymClone(me, mrel->symtab, sym);
   }
+
+  elfu_mSymtabFlatten(me);
 }
 
 
