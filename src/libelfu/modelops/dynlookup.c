@@ -91,3 +91,60 @@ int elfu_mDynLookupPltAddrByName(ElfuElf *me, char *name, GElf_Addr *result)
 
   return -1;
 }
+
+
+
+/* Hazard a guess where a global variable may be found in .bss,
+ * based on dynamic linking information in .rel.dyn */
+int elfu_mDynLookupReldynAddrByName(ElfuElf *me, char *name, GElf_Addr *result)
+{
+  ElfuScn *reldyn;
+  ElfuRel *rel;
+  GElf_Word j;
+
+  reldyn = elfu_mScnForall(me, subFindByName, ".rel.dyn", NULL);
+  if (!reldyn) {
+    /* x86-64 uses .rela.dyn instead */
+    reldyn = elfu_mScnForall(me, subFindByName, ".rela.dyn", NULL);
+  }
+  if (!reldyn) {
+    ELFU_WARN("elfu_mDynLookupReldynAddrByName: Could not find .rel.dyn section in destination ELF.\n");
+    return -1;
+  }
+
+
+  assert(reldyn->linkptr);
+  j = 0;
+  CIRCLEQ_FOREACH(rel, &reldyn->reltab.rels, elem) {
+    ElfuSym *sym;
+    char *symname;
+
+    j++;
+
+    /* We only consider COPY relocations for global variables here.
+     * Technically, these relocations write the variables' contents
+     * to .bss. */
+    if ((me->elfclass == ELFCLASS32 && rel->type != R_386_COPY)
+        || (me->elfclass == ELFCLASS64 && rel->type != R_X86_64_COPY)) {
+      continue;
+    }
+
+    /* Get the (rel->sym)-th symbol from the symbol table that
+     * .rel.dyn points to. */
+    sym = elfu_mSymtabIndexToSym(reldyn->linkptr, rel->sym);
+    assert(sym);
+
+    symname = elfu_mSymtabSymToName(reldyn->linkptr, sym);
+    if (!strcmp(symname, name)) {
+      GElf_Addr addr = rel->offset;
+      ELFU_DEBUG("elfu_mDynLookupReldynAddrByName: Guessing symbol '%s' is in destination memory at %x (PLT entry #%u).\n", name, (unsigned)addr, j);
+      *result = addr;
+      return 0;
+    }
+  }
+
+  ELFU_WARN("elfu_mDynLookupReldynAddrByName: Could not find or use symbol '%s' in destination ELF.\n", name);
+  ELFU_WARN("      NOTE: Only R_*_COPY relocations are resolved to global variables.\n");
+
+  return -1;
+}

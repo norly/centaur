@@ -54,6 +54,7 @@ int elfu_mLayoutAuto(ElfuElf *me);
 
 
 int elfu_mDynLookupPltAddrByName(ElfuElf *me, char *name, GElf_Addr *result);
+int elfu_mDynLookupReldynAddrByName(ElfuElf *me, char *name, GElf_Addr *result);
 
 
 int elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt);

@@ -36,8 +36,11 @@ int elfu_mRelocate(ElfuElf *metarget, ElfuScn *mstarget, ElfuScn *msrt)
         haveSymval = !elfu_mDynLookupPltAddrByName(metarget,
                                      elfu_mSymtabSymToName(msrt->linkptr, sym),
                                      &s);
-      } else if (sym->shndx == SHN_COMMON) {
-        // TODO: Lookup in .rel.dyn
+        if (!haveSymval) {
+          haveSymval = !elfu_mDynLookupReldynAddrByName(metarget,
+                                       elfu_mSymtabSymToName(msrt->linkptr, sym),
+                                       &s);
+        }
       }
     }
 
