@@ -69,6 +69,15 @@ $(BUILDDIR)/$(SRCDIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
 	gcc $(INCLUDES) $(CFLAGS) -c -o $@ $<
 
 
+.PHONY: docs
+docs: doxygen-doc
+
+.PHONY: doxygen-doc
+doxygen-doc:
+	mkdir -p docs
+	doxygen
+
+
 .PHONY: clean
 clean:
 	rm -rf $(BUILDDIR)/
@@ -79,3 +88,4 @@ clean:
 distclean: clean
 	find . -xdev -name "*~" -exec rm {} \;
 	find . -xdev -name "core" -exec rm {} \;
+	rm -rf docs/doxygen/
