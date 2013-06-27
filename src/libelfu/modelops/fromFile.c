@@ -445,7 +445,12 @@ ElfuElf* elfu_mFromElf(Elf *e)
         if (ms->shdr.sh_addr == 0) {
           ms->shdr.sh_addr = shaddr;
         } else {
-          assert(ms->shdr.sh_addr == shaddr);
+          if (ms->shdr.sh_type != SHT_NOBITS) {
+            assert(ms->shdr.sh_addr == shaddr);
+          } else if (ms->shdr.sh_addr > shaddr) {
+            parent->phdr.p_filesz = MAX(parent->phdr.p_filesz,
+                                        ms->shdr.sh_addr - parent->phdr.p_vaddr);
+          }
         }
 
         CIRCLEQ_INSERT_TAIL(&parent->childScnList, ms, elemChildScn);

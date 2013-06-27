@@ -182,7 +182,7 @@ int elfu_eCheck(Elf *e)
         if (PHDR_CONTAINS_SCN_IN_MEMORY(&phdrs[j], &shdrs[i])) {
           GElf_Off shoff = phdrs[j].p_offset + (shdrs[i].sh_addr - phdrs[j].p_vaddr);
 
-          if (shdrs[i].sh_offset != shoff
+          if ((shdrs[i].sh_offset != shoff && shdrs[i].sh_type != SHT_NOBITS)
               || !PHDR_CONTAINS_SCN_IN_FILE(&phdrs[j], &shdrs[i])) {
             ELFU_WARN("elfu_eCheck: SHDR %d and PHDR %d report conflicting file/memory regions.\n", i, j);
             goto ERROR;
