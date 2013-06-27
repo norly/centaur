@@ -1,0 +1,11 @@
+#!/bin/sh
+source ./boilerplate.sh
+
+elfucli --input $BUILDDIR/putsmainsubglobal \
+        --reladd $BUILDDIR/sub_with_global.o \
+        --detour sub,sub_with_global \
+        --output $BUILDDIR/putsmainsubglobal-with-sub-with-global-detour
+test_check_retval
+
+$BUILDDIR/putsmainsubglobal-with-sub-with-global-detour | grep -q "sub_with_global() is returning."
+test_check_retval

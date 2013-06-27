@@ -3,7 +3,7 @@ SRCDIR   = src
 
 SOURCES  = $(shell find $(SRCDIR)/ -iname "*.c")
 OBJS     = $(patsubst $(SRCDIR)/%.c, $(BUILDDIR)/%.o, $(SOURCES))
-EXENAMES = putsmain putsmainsub
+EXENAMES = putsmain putsmainsub putsmainsubglobal
 EXES     = $(patsubst %, $(BUILDDIR)/%, $(EXENAMES))
 
 CFLAGS = -Wall -pedantic
@@ -19,11 +19,7 @@ check: testbase
 	./runtests.sh
 
 
-$(BUILDDIR)/putsmain: $(SRCDIR)/putsmain.c
-	@if [ ! -d $(dir $@) ] ; then mkdir -p $(dir $@) ; fi
-	gcc $(CFLAGS) -o $@ $^
-
-$(BUILDDIR)/putsmainsub: $(SRCDIR)/putsmainsub.c
+$(BUILDDIR)/%: $(SRCDIR)/%.c
 	@if [ ! -d $(dir $@) ] ; then mkdir -p $(dir $@) ; fi
 	gcc $(CFLAGS) -o $@ $^
 
