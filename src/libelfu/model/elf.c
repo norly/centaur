@@ -42,8 +42,8 @@ void elfu_mElfDestroy(ElfuElf* me)
     elfu_mPhdrDestroy(mp);
   }
 
-  CIRCLEQ_FOREACH(ms, &me->orphanScnList, elem) {
-    CIRCLEQ_REMOVE(&me->orphanScnList, ms, elem);
+  CIRCLEQ_FOREACH(ms, &me->orphanScnList, elemChildScn) {
+    CIRCLEQ_REMOVE(&me->orphanScnList, ms, elemChildScn);
     elfu_mScnDestroy(ms);
   }
 

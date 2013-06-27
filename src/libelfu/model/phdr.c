@@ -199,13 +199,13 @@ void elfu_mPhdrDestroy(ElfuPhdr* mp)
 
   assert(mp);
 
-  CIRCLEQ_FOREACH(mp2, &mp->childPhdrList, elem) {
-    CIRCLEQ_REMOVE(&mp->childPhdrList, mp2, elem);
+  CIRCLEQ_FOREACH(mp2, &mp->childPhdrList, elemChildPhdr) {
+    CIRCLEQ_REMOVE(&mp->childPhdrList, mp2, elemChildPhdr);
     elfu_mPhdrDestroy(mp2);
   }
 
-  CIRCLEQ_FOREACH(ms, &mp->childScnList, elem) {
-    CIRCLEQ_REMOVE(&mp->childScnList, ms, elem);
+  CIRCLEQ_FOREACH(ms, &mp->childScnList, elemChildScn) {
+    CIRCLEQ_REMOVE(&mp->childScnList, ms, elemChildScn);
     elfu_mScnDestroy(ms);
   }
 

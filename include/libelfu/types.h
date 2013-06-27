@@ -68,7 +68,6 @@ typedef struct ElfuScn {
   struct ElfuReltab reltab;
 
   CIRCLEQ_ENTRY(ElfuScn) elemChildScn;
-  CIRCLEQ_ENTRY(ElfuScn) elem;
 } ElfuScn;
 
 
