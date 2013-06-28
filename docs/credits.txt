@@ -1,0 +1,6 @@
+centaur is Copyright 2013, Max Staudt.
+
+It builds upon libelf, of which there are various implementations.
+Testing has been done with tired's libelf, as well as Red Hat's variant.
+
+See http://www.mr511.de/software/english.html for more details on libelf.
