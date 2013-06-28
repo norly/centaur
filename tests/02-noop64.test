@@ -1,4 +1,8 @@
 #!/bin/sh
+
+# Test if elfu can clone a given x86-64 executable in the way expected
+# by comparing it to a reference output.
+
 source ./boilerplate.sh
 
 elfucli --input reference/putsmain64 \

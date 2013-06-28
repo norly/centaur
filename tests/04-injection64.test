@@ -1,4 +1,9 @@
 #!/bin/sh
+
+# Test if elfu can inject a x86-64 object file into an x86-64
+# executable. Since both are given, we can compare the output to a
+# reference file.
+
 source ./boilerplate.sh
 
 elfucli --input reference/putsmain64 \

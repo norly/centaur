@@ -1,4 +1,11 @@
 #!/bin/sh
+
+# 1. Inject a freshly built object file into a fresh executable.
+#    Both use a dynamically loaded function and global variable.
+# 2. Detour execution from a function in the executable to a function
+#    originating from the object file.
+# 3. Check if the new executable prints the expected changed output.
+
 source ./boilerplate.sh
 
 elfucli --input $BUILDDIR/putsmainsubglobal \
