@@ -4,9 +4,17 @@
 #include <gelf.h>
 
 
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-#define ROUNDUP(x, align) ((x) + ((align) - ((x) % (align))) % (align))
+#ifndef MIN
+  #define MIN(x, y) ((x) < (y) ? (x) : (y))
+#endif
+
+#ifndef MAX
+  #define MAX(x, y) ((x) > (y) ? (x) : (y))
+#endif
+
+#ifndef ROUNDUP
+  #define ROUNDUP(x, align) ((x) + ((align) - ((x) % (align))) % (align))
+#endif
 
 
 #define OFFS_END(off, sz) ((off) + (sz))
