@@ -11,8 +11,6 @@ void* elfu_mScnForall(ElfuElf *me, SectionHandlerFunc f, void *aux1, void *aux2)
   ElfuPhdr *mp;
   ElfuScn *ms;
 
-  // TODO: Sort PHDRs by offset before interating
-
   CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
     if (mp->phdr.p_type != PT_LOAD) {
       continue;
@@ -248,7 +246,29 @@ void elfu_mScnDestroy(ElfuScn* ms)
 {
   assert(ms);
 
-  // TODO: Free symtab/reltab
+  if (!CIRCLEQ_EMPTY(&ms->symtab.syms)) {
+    ElfuSym *nextsym;
+
+    nextsym = CIRCLEQ_FIRST(&ms->symtab.syms);
+    while ((void*)nextsym != (void*)&ms->symtab.syms) {
+      ElfuSym *cursym = nextsym;
+      nextsym = CIRCLEQ_NEXT(cursym, elem);
+      CIRCLEQ_REMOVE(&ms->symtab.syms, cursym, elem);
+      free(cursym);
+    }
+  }
+
+  if (!CIRCLEQ_EMPTY(&ms->reltab.rels)) {
+    ElfuRel *nextrel;
+
+    nextrel = CIRCLEQ_FIRST(&ms->reltab.rels);
+    while ((void*)nextrel != (void*)&ms->reltab.rels) {
+      ElfuRel *currel = nextrel;
+      nextrel = CIRCLEQ_NEXT(currel, elem);
+      CIRCLEQ_REMOVE(&ms->reltab.rels, currel, elem);
+      free(currel);
+    }
+  }
 
   if (ms->databuf) {
     free(ms->databuf);

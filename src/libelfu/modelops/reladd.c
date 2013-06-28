@@ -130,7 +130,7 @@ static ElfuScn* insertSection(ElfuElf *me, ElfuElf *mrel, ElfuScn *oldscn)
 
   ERROR:
   if (newscn) {
-    // TODO: Destroy newscn
+    elfu_mScnDestroy(newscn);
   }
   return NULL;
 }

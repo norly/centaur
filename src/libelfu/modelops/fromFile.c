@@ -460,7 +460,9 @@ ElfuElf* elfu_mFromElf(Elf *e)
     }
   }
 
-
+  if (secArray) {
+    free(secArray);
+  }
   return me;
 
 

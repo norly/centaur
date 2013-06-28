@@ -345,7 +345,6 @@ int elfu_mLayoutAuto(ElfuElf *me)
   ElfuPhdr *highestOffsEnd;
   ElfuPhdr *mp;
   ElfuScn *ms;
-  ElfuPhdr **phdrArr;
   GElf_Off lastend = 0;
 
   assert(me);
@@ -353,12 +352,6 @@ int elfu_mLayoutAuto(ElfuElf *me)
   /* Find first and last LOAD PHDRs. */
   elfu_mPhdrLoadLowestHighest(me, &lowestAddr, &highestAddr,
                               &lowestOffs, &highestOffsEnd);
-
-  phdrArr = malloc(elfu_mPhdrCount(me) * sizeof(*phdrArr));
-  if (!phdrArr) {
-    ELFU_WARN("elfu_mLayoutAuto: malloc failed for phdrArr.\n");
-    return 1;
-  }
 
 
   lastend = OFFS_END(highestOffsEnd->phdr.p_offset, highestOffsEnd->phdr.p_filesz);

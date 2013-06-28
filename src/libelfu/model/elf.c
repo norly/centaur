@@ -29,22 +29,30 @@ ElfuElf* elfu_mElfAlloc()
 
 void elfu_mElfDestroy(ElfuElf* me)
 {
-  ElfuPhdr *mp;
-  ElfuScn *ms;
-
   assert(me);
 
-  CIRCLEQ_INIT(&me->phdrList);
-  CIRCLEQ_INIT(&me->orphanScnList);
+  if (!CIRCLEQ_EMPTY(&me->phdrList)) {
+    ElfuPhdr *nextmp;
 
-  CIRCLEQ_FOREACH(mp, &me->phdrList, elem) {
-    CIRCLEQ_REMOVE(&me->phdrList, mp, elem);
-    elfu_mPhdrDestroy(mp);
+    nextmp = CIRCLEQ_FIRST(&me->phdrList);
+    while ((void*)nextmp != (void*)&me->phdrList) {
+      ElfuPhdr *curmp = nextmp;
+      nextmp = CIRCLEQ_NEXT(curmp, elem);
+      CIRCLEQ_REMOVE(&me->phdrList, curmp, elem);
+      elfu_mPhdrDestroy(curmp);
+    }
   }
 
-  CIRCLEQ_FOREACH(ms, &me->orphanScnList, elemChildScn) {
-    CIRCLEQ_REMOVE(&me->orphanScnList, ms, elemChildScn);
-    elfu_mScnDestroy(ms);
+  if (!CIRCLEQ_EMPTY(&me->orphanScnList)) {
+    ElfuScn *nextms;
+
+    nextms = CIRCLEQ_FIRST(&me->orphanScnList);
+    while ((void*)nextms != (void*)&me->orphanScnList) {
+      ElfuScn *curms = nextms;
+      nextms = CIRCLEQ_NEXT(curms, elemChildScn);
+      CIRCLEQ_REMOVE(&me->orphanScnList, curms, elemChildScn);
+      elfu_mScnDestroy(curms);
+    }
   }
 
   free(me);

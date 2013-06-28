@@ -151,13 +151,16 @@ int main(int argc, char **argv)
             printf("--reladd: Injecting %s...\n", optarg);
             if (elfu_mCheck(mrel)) {
               printf("--reladd: Check for input file failed.\n");
+              elfu_mElfDestroy(mrel);
               goto ERR;
             }
             if (elfu_mReladd(me, mrel)) {
               printf("--reladd: Failed.\n");
+              elfu_mElfDestroy(mrel);
               goto ERR;
             }
             printf("--reladd: Injected %s.\n", optarg);
+            elfu_mElfDestroy(mrel);
           }
         }
         break;
