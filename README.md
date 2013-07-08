@@ -4,6 +4,13 @@ centaur
 centaur is an ELF executable editing toolkit, focusing on code
 injection and function detouring.
 
+It has been tested successfully in the environments provided by
+several Linux distributions, on both x86-32 and x86-64 machines:
+
+  - Ubuntu 12.04 LTS        (x86-64)
+  - Arch Linux (June 2013)  (x86-64)
+  - Slackware 14.0          (x86-32)
+
 
 Example
 -------
