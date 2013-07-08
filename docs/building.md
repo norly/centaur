@@ -20,9 +20,13 @@ compiler and linker flags. Failing this, it defaults to "-lelf" to
 link against libelf, and no additional include directories.
 
 On Ubuntu, development files can be installed using
+
     apt-get install libelfg0-dev
+
 for tired's libelf (preferred), or
+
     apt-get install libelf-dev
+
 for Red Hat's libelf.
 
 
@@ -41,9 +45,13 @@ Cleanup
 -------
 
 The usual
+
     make clean
+
 and
+
     make distclean
+
 are supported to clean binary files (clean), or all backup and
 generated files (distclean).
 
@@ -54,7 +62,9 @@ Installation
 There is currently no automated installation.
 
 If you need system-wide availability, you can copy
-    include/libelfu --> /usr/local/include/
-    build/elfucli --> /usr/local/bin/
+
+    include/libelfu       --> /usr/local/include/
+    build/elfucli         --> /usr/local/bin/
     build/libelfu.{a,so*} --> /usr/local/lib/
+
 or your local variation thereof.
