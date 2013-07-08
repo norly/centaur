@@ -29,10 +29,29 @@ This functionality is exposed by the underlying `libelfu` via a C API,
 at the same high level. `elfucli` serves as an example application for
 it and doubles as a handy scalpel for ELF files.
 
-More examples can be found in the testsuite.
+More examples can be found in the testsuite. The 'detour' test is
+particularly similar to the example above.
 
 
-Build instructions, Credits, License, ...
------------------------------------------
+Build instructions, testing
+---------------------------
+
+Usually, a plain
+
+    make
+
+should be enough to build centaur, provided that a version of libelf
+and its development files are installed. If not, see docs/building.md
+for further hints such as the packages to be installed on Ubuntu.
+
+Once that is done,
+
+    make check
+
+will build and run the testsuite. See docs/tests.md for details.
+
+
+License, etc
+------------
 
 See the docs/ directory for all other documentation.
